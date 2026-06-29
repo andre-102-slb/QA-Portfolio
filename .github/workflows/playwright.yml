@@ -61,12 +61,11 @@ jobs:
             npx playwright test --project=chromium --retries="$RETRIES"
           fi
 
-      - name: Bundle results into report
+      - name: Write run metadata
         if: ${{ !cancelled() }}
         env:
           RUN_NAME: ${{ github.event.inputs.run_name }}
         run: |
-          cp test-results/results.json playwright-report/results.json
           node -e "const fs=require('fs'); const n=process.env.RUN_NAME?.trim(); fs.writeFileSync('playwright-report/run-meta.json', JSON.stringify({ name: n || 'Playwright Tests' }));"
 
       - uses: actions/upload-artifact@v4
