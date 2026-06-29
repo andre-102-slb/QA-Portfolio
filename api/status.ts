@@ -1,6 +1,7 @@
-const { getRunStatus, listWorkflowRuns } = require("./github");
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { getRunStatus, listWorkflowRuns } from "./github";
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -19,7 +20,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const runId = req.query.run_id;
+    const runId = typeof req.query.run_id === "string" ? req.query.run_id : undefined;
 
     if (runId) {
       const status = await getRunStatus(token, runId);
@@ -31,9 +32,10 @@ module.exports = async (req, res) => {
       return res.status(404).json({ error: "No workflow runs found" });
     }
 
-    const status = await getRunStatus(token, runs[0].id);
+    const status = await getRunStatus(token, String(runs[0].id));
     return res.status(200).json(status);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
-};
+}

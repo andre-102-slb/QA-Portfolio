@@ -1,11 +1,13 @@
-const {
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import {
   GITHUB_REPO,
-  WORKFLOW_FILE,
   GITHUB_REF,
+  WORKFLOW_FILE,
   findRunAfterDispatch,
-} = require("./github");
+} from "./github";
+import type { TriggerBody } from "./types";
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -20,17 +22,15 @@ module.exports = async (req, res) => {
 
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
-    return res.status(500).json({
-      error: "GITHUB_TOKEN not configured on the server",
-    });
+    return res.status(500).json({ error: "GITHUB_TOKEN not configured on the server" });
   }
 
-  const { test_paths, retries } = req.body || {};
+  const body = (req.body ?? {}) as TriggerBody;
   const testPaths =
-    typeof test_paths === "string" && test_paths.trim()
-      ? test_paths.trim()
+    typeof body.test_paths === "string" && body.test_paths.trim()
+      ? body.test_paths.trim()
       : "frontend-tests/smoke/login frontend-tests/regression/login";
-  const retryCount = retries === 2 || retries === "2" ? "2" : "0";
+  const retryCount = body.retries === 2 || body.retries === "2" ? "2" : "0";
   const dispatchedAt = new Date();
 
   const response = await fetch(
@@ -64,4 +64,4 @@ module.exports = async (req, res) => {
     run_url: run?.html_url ?? null,
     actions_url: `https://github.com/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}`,
   });
-};
+}

@@ -1,6 +1,7 @@
-const { downloadRunResults } = require("./github");
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { downloadRunResults } from "./github";
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -18,7 +19,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: "GITHUB_TOKEN not configured on the server" });
   }
 
-  const runId = req.query.run_id;
+  const runId = typeof req.query.run_id === "string" ? req.query.run_id : undefined;
   if (!runId) {
     return res.status(400).json({ error: "run_id is required" });
   }
@@ -32,6 +33,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json(results);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
-};
+}

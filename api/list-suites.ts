@@ -1,17 +1,21 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import type { SuiteGroup } from "./types";
 
 const TEST_ROOT = "frontend-tests";
-const TAG_BY_GROUP = { smoke: "smoke", regression: "e2e" };
-const NAME_BY_GROUP = { smoke: "Smoke Tests", regression: "Regression Tests" };
+const TAG_BY_GROUP: Record<string, string> = { smoke: "smoke", regression: "e2e" };
+const NAME_BY_GROUP: Record<string, string> = {
+  smoke: "Smoke Tests",
+  regression: "Regression Tests",
+};
 
-function getProjectRoot() {
+function getProjectRoot(): string {
   const fromCwd = process.cwd();
   if (fs.existsSync(path.join(fromCwd, TEST_ROOT))) return fromCwd;
   return path.join(__dirname, "..");
 }
 
-function listSuites() {
+export function listSuites(): SuiteGroup[] {
   const root = path.join(getProjectRoot(), TEST_ROOT);
   if (!fs.existsSync(root)) return [];
 
@@ -31,12 +35,10 @@ function listSuites() {
 
       return {
         id: groupId,
-        name: NAME_BY_GROUP[groupId] || `${groupId} Tests`,
+        name: NAME_BY_GROUP[groupId] ?? `${groupId} Tests`,
         path: `${TEST_ROOT}/${groupId}`,
-        tag: TAG_BY_GROUP[groupId] || "e2e",
+        tag: TAG_BY_GROUP[groupId] ?? "e2e",
         children,
       };
     });
 }
-
-module.exports = { listSuites };

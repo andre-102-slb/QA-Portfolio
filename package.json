@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "node api/build.js"
+    "build": "tsx api/build.ts",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -23,11 +24,15 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "@types/adm-zip": "^0.5.8",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.0.1",
     "@types/supertest": "^7.2.0",
+    "@vercel/node": "^5.1.14",
     "jest": "^30.4.2",
     "supertest": "^7.2.2",
-    "ts-jest": "^29.4.11"
+    "ts-jest": "^29.4.11",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }

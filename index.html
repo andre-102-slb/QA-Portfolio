@@ -301,6 +301,68 @@
     .t-warn  { color: var(--warn); }
     .t-muted { color: var(--muted); }
 
+    /* ── Live run report ── */
+    .run-report {
+      margin-top: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: none;
+    }
+    .run-report.show { display: block; }
+    .run-report-title {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .report-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+      margin-bottom: 1rem;
+    }
+    .report-metric {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+    }
+    .report-metric-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+    .report-metric-value { font-size: 20px; font-family: var(--mono); font-weight: 500; }
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .results-table th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .results-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+    }
+    .results-table tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: var(--mono);
+    }
+    .badge-pass { background: rgba(63,185,80,.15); color: var(--pass); }
+    .badge-fail { background: rgba(248,81,73,.15); color: var(--fail); }
+    .badge-skip { background: rgba(227,179,65,.15); color: var(--warn); }
+
     /* ── Reports ── */
     .reports-list { display: flex; flex-direction: column; gap: 8px; }
     .report-row {
@@ -441,8 +503,8 @@
         <a class="btn-ghost" href="https://github.com/andre-102-slb/QA-Portfolio" target="_blank">
           <i class="ti ti-brand-github"></i> GitHub
         </a>
-        <a class="btn-ghost" id="report-link" href="playwright-report/index.html" target="_blank">
-          <i class="ti ti-external-link"></i> Latest report
+        <a class="btn-ghost" id="report-link" href="#run-report" onclick="document.getElementById('run-report').classList.add('show'); return false;">
+          <i class="ti ti-file-description"></i> Latest report
         </a>
       </div>
     </div>
@@ -475,15 +537,6 @@
             <i class="ti ti-player-play"></i> Run selected
           </button>
 
-          <a
-            class="btn-ghost actions-link"
-            href="https://github.com/andre-102-slb/QA-Portfolio/actions/workflows/playwright.yml"
-            target="_blank"
-            rel="noopener"
-          >
-            <i class="ti ti-brand-github"></i> Open GitHub Actions
-          </a>
-
           <div class="progress-wrap" id="progress-wrap">
             <div class="progress-track">
               <div class="progress-fill" id="progress-fill"></div>
@@ -492,59 +545,50 @@
           </div>
 
           <div class="terminal" id="terminal"></div>
+
+          <div class="run-report" id="run-report">
+            <div class="run-report-title">Live report</div>
+            <div class="report-summary">
+              <div class="report-metric">
+                <div class="report-metric-label">Total</div>
+                <div class="report-metric-value" id="rep-total">—</div>
+              </div>
+              <div class="report-metric">
+                <div class="report-metric-label">Passed</div>
+                <div class="report-metric-value green" id="rep-passed">—</div>
+              </div>
+              <div class="report-metric">
+                <div class="report-metric-label">Failed</div>
+                <div class="report-metric-value red" id="rep-failed">—</div>
+              </div>
+              <div class="report-metric">
+                <div class="report-metric-label">Skipped</div>
+                <div class="report-metric-value" id="rep-skipped">—</div>
+              </div>
+            </div>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Status</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody id="results-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- REPORTS -->
       <div class="section" id="sec-reports">
         <div class="section-header">
-          <span class="section-desc">Previous runs — click to open HTML report</span>
+          <span class="section-desc">Last run from this dashboard</span>
         </div>
 
-        <div class="reports-list">
-          <div class="report-row">
-            <div class="report-icon icon-pass"><i class="ti ti-check"></i></div>
-            <div class="report-info">
-              <div class="report-name">Smoke + Regression</div>
-              <div class="report-date">2025-06-29 · 14:32 · 12s</div>
-            </div>
-            <div class="report-stats">
-              <span class="s-pass">6 passed</span>
-              <span class="s-fail">0 failed</span>
-            </div>
-            <a class="btn-view" href="playwright-report/index.html" target="_blank">
-              <i class="ti ti-external-link"></i> View
-            </a>
-          </div>
-
-          <div class="report-row">
-            <div class="report-icon icon-pass"><i class="ti ti-check"></i></div>
-            <div class="report-info">
-              <div class="report-name">Smoke tests only</div>
-              <div class="report-date">2025-06-29 · 09:15 · 6s</div>
-            </div>
-            <div class="report-stats">
-              <span class="s-pass">3 passed</span>
-              <span class="s-fail">0 failed</span>
-            </div>
-            <a class="btn-view" href="playwright-report/index.html" target="_blank">
-              <i class="ti ti-external-link"></i> View
-            </a>
-          </div>
-
-          <div class="report-row">
-            <div class="report-icon icon-pass"><i class="ti ti-check"></i></div>
-            <div class="report-info">
-              <div class="report-name">Regression only</div>
-              <div class="report-date">2025-06-28 · 18:50 · 5s</div>
-            </div>
-            <div class="report-stats">
-              <span class="s-pass">3 passed</span>
-              <span class="s-fail">0 failed</span>
-            </div>
-            <a class="btn-view" href="playwright-report/index.html" target="_blank">
-              <i class="ti ti-external-link"></i> View
-            </a>
+        <div class="reports-list" id="reports-list">
+          <div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">
+            No runs yet — use Run selected on the dashboard
           </div>
         </div>
       </div>
@@ -596,9 +640,8 @@
     suitesApi: "/api/suites",
     statusApi: "/api/status",
     resultsApi: "/api/results",
+    pollIntervalMs: 4000,
   };
-
-  const ACTIONS_URL = `https://github.com/${CONFIG.githubRepo}/actions/workflows/${CONFIG.workflowFile}`;
   const titles = { run: "Run tests", reports: "Reports", stats: "Stats" };
 
   function show(id, btn) {
@@ -732,58 +775,105 @@
   }
 
   function formatDuration(ms) {
-    if (!ms) return "";
+    if (!ms) return "—";
     if (ms < 1000) return `${ms}ms`;
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
+  function clearRunReport() {
+    document.getElementById("run-report").classList.remove("show");
+    document.getElementById("rep-total").textContent = "—";
+    document.getElementById("rep-passed").textContent = "—";
+    document.getElementById("rep-failed").textContent = "—";
+    document.getElementById("rep-skipped").textContent = "—";
+    document.getElementById("results-tbody").innerHTML = "";
+  }
+
+  function renderRunReport(results) {
+    const { stats, tests } = results;
+    document.getElementById("run-report").classList.add("show");
+    document.getElementById("rep-total").textContent = stats.total;
+    document.getElementById("rep-passed").textContent = stats.passed;
+    document.getElementById("rep-failed").textContent = stats.failed;
+    document.getElementById("rep-skipped").textContent = stats.skipped;
+
+    const tbody = document.getElementById("results-tbody");
+    tbody.innerHTML = tests
+      .map((test) => {
+        const badgeClass =
+          test.status === "passed"
+            ? "badge-pass"
+            : test.status === "failed"
+              ? "badge-fail"
+              : "badge-skip";
+        return `<tr>
+          <td>${test.title}</td>
+          <td><span class="badge ${badgeClass}">${test.status}</span></td>
+          <td>${formatDuration(test.duration)}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  function addToReportsHistory(name, results) {
+    const list = document.getElementById("reports-list");
+    const empty = list.querySelector(".suite-group-count");
+    if (empty) empty.remove();
+
+    const { stats } = results;
+    const iconClass = stats.failed > 0 ? "icon-fail" : "icon-pass";
+    const icon = stats.failed > 0 ? "ti-x" : "ti-check";
+    const now = new Date().toLocaleString("pt-PT", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const row = document.createElement("div");
+    row.className = "report-row";
+    row.innerHTML = `
+      <div class="report-icon ${iconClass}"><i class="ti ${icon}"></i></div>
+      <div class="report-info">
+        <div class="report-name">${name}</div>
+        <div class="report-date">${now}</div>
+      </div>
+      <div class="report-stats">
+        <span class="s-pass">${stats.passed} passed</span>
+        <span class="s-fail">${stats.failed} failed</span>
+      </div>
+    `;
+    list.prepend(row);
+  }
+
   async function fetchRunResults(runId) {
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    for (let attempt = 0; attempt < 15; attempt += 1) {
       const res = await fetch(`${CONFIG.resultsApi}?run_id=${runId}`);
       if (res.ok) {
         return await res.json();
       }
-      await sleep(3000);
+      await sleep(CONFIG.pollIntervalMs);
     }
     return null;
   }
 
-  function logPlaywrightResults(results) {
-    const { stats, tests } = results;
-    appendLog("muted", "────────────────────────────────────────");
-    appendLog(
-      "info",
-      `  Results: ${stats.total} run · ${stats.passed} passed · ${stats.failed} failed · ${stats.skipped} skipped`
-    );
-
-    for (const test of tests) {
-      const icon = test.status === "passed" ? "✓" : test.status === "failed" ? "✗" : "·";
-      const cls =
-        test.status === "passed"
-          ? "pass"
-          : test.status === "failed"
-            ? "fail"
-            : "warn";
-      const duration = formatDuration(test.duration);
-      appendLog(cls, `  ${icon}  ${test.title}${duration ? ` (${duration})` : ""}`);
-    }
-  }
-
-  async function pollRunStatus(runId, { fill, label }) {
+  async function pollRunStatus(runId, { fill, label }, suiteLabel) {
     const loggedSteps = new Set();
     let lastStatus = "";
     const maxAttempts = 90;
+
+    document.getElementById("run-report").classList.add("show");
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const res = await fetch(`${CONFIG.statusApi}?run_id=${runId}`);
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        appendLog("warn", "  Could not fetch run status from GitHub");
+        appendLog("warn", "  Could not fetch run status");
         return;
       }
 
-      const statusLine = `[${data.status}] ${data.display_title || "Playwright Tests"}`;
+      const statusLine = `${data.status} — ${data.display_title || "Playwright Tests"}`;
       if (statusLine !== lastStatus) {
         appendLog("info", "  " + statusLine);
         lastStatus = statusLine;
@@ -795,43 +885,43 @@
           loggedSteps.add(step.name);
           const icon = step.conclusion === "success" ? "✓" : step.conclusion === "failure" ? "✗" : "·";
           const cls =
-            step.conclusion === "success"
-              ? "pass"
-              : step.conclusion === "failure"
-                ? "fail"
-                : "muted";
+            step.conclusion === "success" ? "pass" : step.conclusion === "failure" ? "fail" : "muted";
           appendLog(cls, `  ${icon}  ${step.name}`);
         }
       }
 
       const progress =
-        data.status === "queued" ? 25 : data.status === "in_progress" ? 65 : 100;
+        data.status === "queued" ? 20 : data.status === "in_progress" ? 55 : 100;
       fill.style.width = progress + "%";
       label.textContent = formatRunLabel(data);
 
       if (data.status === "completed") {
-        if (data.conclusion === "success") {
-          appendLog("pass", "  ✓  Workflow finished successfully");
-        } else {
-          appendLog("fail", "  ✗  Workflow finished — " + (data.conclusion || "failed"));
-        }
+        label.textContent =
+          data.conclusion === "success" ? "Completed — loading report…" : "Completed — loading report…";
 
         const results = await fetchRunResults(runId);
         if (results) {
-          logPlaywrightResults(results);
+          renderRunReport(results);
+          addToReportsHistory(suiteLabel, results);
+          appendLog(
+            results.stats.failed > 0 ? "fail" : "pass",
+            `  ${results.stats.passed} passed · ${results.stats.failed} failed · ${results.stats.total} total`
+          );
+          label.textContent =
+            results.stats.failed > 0
+              ? `Done — ${results.stats.failed} failed`
+              : `Done — all ${results.stats.passed} passed`;
         } else {
-          appendLog("warn", "  Playwright results not available yet");
+          appendLog("warn", "  Results not ready yet — stay on this page and check Reports");
+          label.textContent = "Workflow done — results pending";
         }
-
-        if (data.html_url) appendLog("info", "  View run: " + data.html_url);
-        appendLog("muted", "  HTML report: download playwright-report artifact on GitHub");
         return;
       }
 
-      await sleep(5000);
+      await sleep(CONFIG.pollIntervalMs);
     }
 
-    appendLog("warn", "  Polling stopped — check GitHub Actions for final status");
+    appendLog("warn", "  Polling stopped — run may still be in progress");
   }
 
   async function runTests() {
@@ -849,16 +939,18 @@
     const testPaths = paths.join(" ");
     const retries = getRetries();
     const command = buildRunCommand();
+    const suiteLabel = paths.map((p) => p.split("/").slice(-2).join("/")).join(", ");
 
     btn.disabled = true;
-    btn.innerHTML = "<i class=\"ti ti-loader\"></i> Triggering…";
+    btn.innerHTML = "<i class=\"ti ti-loader\"></i> Running…";
     term.innerHTML = "";
     term.classList.add("show");
+    clearRunReport();
     wrap.style.display = "block";
     fill.style.width = "10%";
     label.textContent = "Dispatching workflow…";
 
-    appendLog("info", "▶  Triggering GitHub Actions workflow");
+    appendLog("info", "▶  Starting test run");
     appendLog("muted", "$ " + command);
 
     try {
@@ -874,27 +966,22 @@
         throw new Error(data.error || `HTTP ${res.status}`);
       }
 
-      appendLog("pass", "  ✓  Workflow dispatched successfully");
-      appendLog("info", "  Suites: " + testPaths);
-      appendLog("info", "  Retries: " + retries);
+      appendLog("pass", "  ✓  Workflow started");
 
       if (data.run_id) {
-        appendLog("info", "  Run #" + data.run_id + " — polling GitHub…");
-        fill.style.width = "20%";
-        label.textContent = "Waiting for GitHub Actions…";
-        await pollRunStatus(data.run_id, { fill, label });
+        appendLog("info", "  Polling every " + CONFIG.pollIntervalMs / 1000 + "s…");
+        fill.style.width = "15%";
+        label.textContent = "Waiting for run to start…";
+        await pollRunStatus(data.run_id, { fill, label }, suiteLabel);
       } else {
         fill.style.width = "100%";
-        label.textContent = "Dispatched — open GitHub Actions to track";
-        appendLog("warn", "  Run ID not found yet — track manually:");
-        appendLog("info", "  " + (data.run_url || ACTIONS_URL));
+        label.textContent = "Started — waiting for run ID…";
+        appendLog("warn", "  Run ID not found — try again in a few seconds");
       }
     } catch (err) {
       fill.style.width = "100%";
-      label.textContent = "API trigger failed — use GitHub Actions";
+      label.textContent = "Run failed to start";
       appendLog("fail", "  ✗  " + err.message);
-      appendLog("warn", "  Open GitHub Actions and click \"Run workflow\" manually:");
-      appendLog("info", "  " + ACTIONS_URL);
     }
 
     btn.disabled = false;

@@ -1,6 +1,6 @@
-const fs = require("fs");
-const path = require("path");
-const { listSuites } = require("./list-suites");
+import fs from "fs";
+import path from "path";
+import { listSuites } from "./list-suites";
 
 const root = path.join(__dirname, "..");
 const publicDir = path.join(root, "public");
