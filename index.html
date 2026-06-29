@@ -304,8 +304,8 @@
     .t-warn  { color: var(--warn); }
     .t-muted { color: var(--muted); }
 
-    /* ── Live run report ── */
-    .run-report {
+    /* ── Reports viewer (Reports tab only) ── */
+    .reports-viewer {
       margin-top: 1rem;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -313,8 +313,8 @@
       padding: 1rem;
       display: none;
     }
-    .run-report.show { display: block; }
-    .run-report-title {
+    .reports-viewer.show { display: block; }
+    .reports-viewer-title {
       font-size: 11px;
       color: var(--muted);
       text-transform: uppercase;
@@ -470,8 +470,8 @@
         <a class="btn-ghost" href="https://github.com/andre-102-slb/QA-Portfolio" target="_blank">
           <i class="ti ti-brand-github"></i> GitHub
         </a>
-        <a class="btn-ghost" id="report-link" href="#run-report" onclick="document.getElementById('run-report').classList.add('show'); return false;">
-          <i class="ti ti-file-description"></i> Latest report
+        <a class="btn-ghost" href="#" onclick="openReportsTab(); return false;">
+          <i class="ti ti-file-description"></i> Reports
         </a>
       </div>
     </div>
@@ -492,9 +492,6 @@
             <button class="opt-toggle on" onclick="this.classList.toggle('on')">
               <i class="ti ti-eye-off"></i> Headless
             </button>
-            <button class="opt-toggle on" onclick="this.classList.toggle('on')">
-              <i class="ti ti-file-description"></i> HTML report
-            </button>
             <button class="opt-toggle" id="opt-retry" onclick="this.classList.toggle('on')">
               <i class="ti ti-refresh"></i> Retry on fail
             </button>
@@ -512,11 +509,6 @@
           </div>
 
           <div class="terminal" id="terminal"></div>
-
-          <div class="run-report" id="run-report">
-            <div class="run-report-title">Playwright report</div>
-            <iframe class="report-frame" id="run-report-frame" title="Playwright report"></iframe>
-          </div>
         </div>
       </div>
 
@@ -532,8 +524,8 @@
           </div>
         </div>
 
-        <div class="run-report" id="reports-detail">
-          <div class="run-report-title">Playwright report</div>
+        <div class="reports-viewer" id="reports-detail">
+          <div class="reports-viewer-title">Playwright report</div>
           <iframe class="report-frame" id="reports-detail-frame" title="Playwright report"></iframe>
         </div>
       </div>
@@ -599,6 +591,7 @@
     document.getElementById("sec-" + id).classList.add("active");
     btn.classList.add("active");
     document.getElementById("page-title").textContent = titles[id];
+    if (id !== "reports") hideReportsViewer();
   }
 
   function toggleSuite(el) {
@@ -729,29 +722,22 @@
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
-  function showReportFrame(frameId, runId) {
-    const panel = frameId === "run-report-frame" ? "run-report" : "reports-detail";
-    const frame = document.getElementById(frameId);
-    document.getElementById(panel).classList.add("show");
-    frame.src = reportUrl(runId);
+  function openReportsTab() {
+    const btn = document.querySelector(".nav-item[data-section='reports']");
+    if (btn) show("reports", btn);
   }
 
-  function clearRunReport() {
-    document.getElementById("run-report").classList.remove("show");
-    document.getElementById("run-report-frame").src = "about:blank";
+  function hideReportsViewer() {
+    document.getElementById("reports-detail").classList.remove("show");
+    document.getElementById("reports-detail-frame").src = "about:blank";
   }
 
-  function renderRunReport(runId) {
-    showReportFrame("run-report-frame", runId);
-  }
-
-  function renderReportsDetail(report) {
-    if (!report?.has_report || !report.report_url) {
-      document.getElementById("reports-detail").classList.remove("show");
-      document.getElementById("reports-detail-frame").src = "about:blank";
-      return;
-    }
-    showReportFrame("reports-detail-frame", report.run_id);
+  function openReportInReportsTab(report) {
+    if (!report?.has_report || !report.report_url) return;
+    openReportsTab();
+    document.getElementById("reports-detail").classList.add("show");
+    document.getElementById("reports-detail-frame").src = reportUrl(report.run_id);
+    document.getElementById("reports-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function formatConclusion(conclusion) {
@@ -819,9 +805,11 @@
       `;
 
       if (hasReport) {
-        row.querySelector(".btn-view").onclick = () => {
-          renderReportsDetail(report);
-          document.getElementById("reports-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        row.querySelector(".btn-view").onclick = () => openReportInReportsTab(report);
+        row.style.cursor = "pointer";
+        row.onclick = (e) => {
+          if (e.target.closest(".btn-view")) return;
+          openReportInReportsTab(report);
         };
       }
 
@@ -862,8 +850,6 @@
     let lastStatus = "";
     const maxAttempts = 90;
 
-    document.getElementById("run-report").classList.add("show");
-
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const res = await fetch(`${CONFIG.statusApi}?run_id=${runId}`);
       const data = await res.json().catch(() => ({}));
@@ -896,17 +882,17 @@
       label.textContent = formatRunLabel(data);
 
       if (data.status === "completed") {
-        label.textContent = "Completed — loading report…";
+        label.textContent = "Completed — saving report…";
 
         const ready = await waitForReport(runId);
         if (ready) {
-          renderRunReport(runId);
           await loadReports();
-          const outcome =
+          appendLog(
+            data.conclusion === "success" ? "pass" : "fail",
             data.conclusion === "success"
-              ? "  ✓  Playwright report ready"
-              : "  ✗  Playwright report ready (run failed)";
-          appendLog(data.conclusion === "success" ? "pass" : "fail", outcome);
+              ? "  ✓  Report saved — open the Reports tab to view"
+              : "  ✗  Report saved — open the Reports tab to view"
+          );
           label.textContent =
             data.conclusion === "success" ? "Done — all tests passed" : "Done — tests failed";
         } else {
@@ -943,7 +929,6 @@
     btn.innerHTML = "<i class=\"ti ti-loader\"></i> Running…";
     term.innerHTML = "";
     term.classList.add("show");
-    clearRunReport();
     wrap.style.display = "block";
     fill.style.width = "10%";
     label.textContent = "Dispatching workflow…";
