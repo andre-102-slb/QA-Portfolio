@@ -18,6 +18,9 @@
   "functions": {
     "api/suites.ts": {
       "includeFiles": "frontend-tests/**"
+    },
+    "api/report/[...slug].ts": {
+      "maxDuration": 60
     }
   }
 }

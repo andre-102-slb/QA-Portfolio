@@ -100,6 +100,8 @@
       color: var(--fail);
       font-family: var(--mono);
     }
+    .nav-badge:empty,
+    .nav-badge[hidden] { display: none; }
 
     .sidebar-footer {
       margin-top: auto;
@@ -319,50 +321,14 @@
       letter-spacing: 0.06em;
       margin-bottom: 0.75rem;
     }
-    .report-summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 8px;
-      margin-bottom: 1rem;
-    }
-    .report-metric {
-      background: var(--surface2);
+    .report-frame {
+      width: 100%;
+      height: 70vh;
+      min-height: 480px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 0.75rem;
+      background: #fff;
     }
-    .report-metric-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-    .report-metric-value { font-size: 20px; font-family: var(--mono); font-weight: 500; }
-    .results-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    .results-table th {
-      text-align: left;
-      color: var(--muted);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .results-table td {
-      padding: 8px;
-      border-bottom: 1px solid var(--border);
-      font-family: var(--mono);
-    }
-    .results-table tr:last-child td { border-bottom: none; }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-family: var(--mono);
-    }
-    .badge-pass { background: rgba(63,185,80,.15); color: var(--pass); }
-    .badge-fail { background: rgba(248,81,73,.15); color: var(--fail); }
-    .badge-skip { background: rgba(227,179,65,.15); color: var(--warn); }
 
     /* ── Reports ── */
     .reports-list { display: flex; flex-direction: column; gap: 8px; }
@@ -477,7 +443,7 @@
       </button>
       <button class="nav-item" data-section="reports" onclick="show('reports', this)">
         <i class="ti ti-file-description"></i> Reports
-        <span class="nav-badge">3</span>
+        <span class="nav-badge" id="reports-badge" hidden></span>
       </button>
     </div>
 
@@ -548,35 +514,8 @@
           <div class="terminal" id="terminal"></div>
 
           <div class="run-report" id="run-report">
-            <div class="run-report-title">Live report</div>
-            <div class="report-summary">
-              <div class="report-metric">
-                <div class="report-metric-label">Total</div>
-                <div class="report-metric-value" id="rep-total">—</div>
-              </div>
-              <div class="report-metric">
-                <div class="report-metric-label">Passed</div>
-                <div class="report-metric-value green" id="rep-passed">—</div>
-              </div>
-              <div class="report-metric">
-                <div class="report-metric-label">Failed</div>
-                <div class="report-metric-value red" id="rep-failed">—</div>
-              </div>
-              <div class="report-metric">
-                <div class="report-metric-label">Skipped</div>
-                <div class="report-metric-value" id="rep-skipped">—</div>
-              </div>
-            </div>
-            <table class="results-table">
-              <thead>
-                <tr>
-                  <th>Test</th>
-                  <th>Status</th>
-                  <th>Duration</th>
-                </tr>
-              </thead>
-              <tbody id="results-tbody"></tbody>
-            </table>
+            <div class="run-report-title">Playwright report</div>
+            <iframe class="report-frame" id="run-report-frame" title="Playwright report"></iframe>
           </div>
         </div>
       </div>
@@ -584,13 +523,18 @@
       <!-- REPORTS -->
       <div class="section" id="sec-reports">
         <div class="section-header">
-          <span class="section-desc">Last run from this dashboard</span>
+          <span class="section-desc">Recent runs from GitHub Actions</span>
         </div>
 
         <div class="reports-list" id="reports-list">
           <div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">
-            No runs yet — use Run selected on the dashboard
+            Loading reports…
           </div>
+        </div>
+
+        <div class="run-report" id="reports-detail">
+          <div class="run-report-title">Playwright report</div>
+          <iframe class="report-frame" id="reports-detail-frame" title="Playwright report"></iframe>
         </div>
       </div>
 
@@ -640,10 +584,14 @@
     triggerApi: "/api/trigger",
     suitesApi: "/api/suites",
     statusApi: "/api/status",
-    resultsApi: "/api/results",
+    reportsApi: "/api/reports",
     pollIntervalMs: 4000,
   };
   const titles = { run: "Run tests", reports: "Reports", stats: "Stats" };
+
+  function reportUrl(runId) {
+    return `/api/report/${runId}/index.html`;
+  }
 
   function show(id, btn) {
     document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
@@ -781,81 +729,132 @@
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
+  function showReportFrame(frameId, runId) {
+    const panel = frameId === "run-report-frame" ? "run-report" : "reports-detail";
+    const frame = document.getElementById(frameId);
+    document.getElementById(panel).classList.add("show");
+    frame.src = reportUrl(runId);
+  }
+
   function clearRunReport() {
     document.getElementById("run-report").classList.remove("show");
-    document.getElementById("rep-total").textContent = "—";
-    document.getElementById("rep-passed").textContent = "—";
-    document.getElementById("rep-failed").textContent = "—";
-    document.getElementById("rep-skipped").textContent = "—";
-    document.getElementById("results-tbody").innerHTML = "";
+    document.getElementById("run-report-frame").src = "about:blank";
   }
 
-  function renderRunReport(results) {
-    const { stats, tests } = results;
-    document.getElementById("run-report").classList.add("show");
-    document.getElementById("rep-total").textContent = stats.total;
-    document.getElementById("rep-passed").textContent = stats.passed;
-    document.getElementById("rep-failed").textContent = stats.failed;
-    document.getElementById("rep-skipped").textContent = stats.skipped;
-
-    const tbody = document.getElementById("results-tbody");
-    tbody.innerHTML = tests
-      .map((test) => {
-        const badgeClass =
-          test.status === "passed"
-            ? "badge-pass"
-            : test.status === "failed"
-              ? "badge-fail"
-              : "badge-skip";
-        return `<tr>
-          <td>${test.title}</td>
-          <td><span class="badge ${badgeClass}">${test.status}</span></td>
-          <td>${formatDuration(test.duration)}</td>
-        </tr>`;
-      })
-      .join("");
+  function renderRunReport(runId) {
+    showReportFrame("run-report-frame", runId);
   }
 
-  function addToReportsHistory(name, results) {
-    const list = document.getElementById("reports-list");
-    const empty = list.querySelector(".suite-group-count");
-    if (empty) empty.remove();
+  function renderReportsDetail(report) {
+    if (!report?.has_report || !report.report_url) {
+      document.getElementById("reports-detail").classList.remove("show");
+      document.getElementById("reports-detail-frame").src = "about:blank";
+      return;
+    }
+    showReportFrame("reports-detail-frame", report.run_id);
+  }
 
-    const { stats } = results;
-    const iconClass = stats.failed > 0 ? "icon-fail" : "icon-pass";
-    const icon = stats.failed > 0 ? "ti-x" : "ti-check";
-    const now = new Date().toLocaleString("pt-PT", {
+  function formatConclusion(conclusion) {
+    if (conclusion === "success") return "passed";
+    if (conclusion === "failure") return "failed";
+    if (conclusion === "cancelled") return "cancelled";
+    return conclusion || "—";
+  }
+
+  function formatReportDate(value) {
+    return new Date(value).toLocaleString("pt-PT", {
       day: "2-digit",
       month: "2-digit",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-
-    const row = document.createElement("div");
-    row.className = "report-row";
-    row.innerHTML = `
-      <div class="report-icon ${iconClass}"><i class="ti ${icon}"></i></div>
-      <div class="report-info">
-        <div class="report-name">${name}</div>
-        <div class="report-date">${now}</div>
-      </div>
-      <div class="report-stats">
-        <span class="s-pass">${stats.passed} passed</span>
-        <span class="s-fail">${stats.failed} failed</span>
-      </div>
-    `;
-    list.prepend(row);
   }
 
-  async function fetchRunResults(runId) {
-    for (let attempt = 0; attempt < 15; attempt += 1) {
-      const res = await fetch(`${CONFIG.resultsApi}?run_id=${runId}`);
-      if (res.ok) {
-        return await res.json();
+  function updateReportsBadge(reports) {
+    const badge = document.getElementById("reports-badge");
+    const withReports = reports.filter((r) => r.has_report).length;
+    if (withReports > 0) {
+      badge.textContent = String(withReports);
+      badge.hidden = false;
+    } else {
+      badge.textContent = "";
+      badge.hidden = true;
+    }
+  }
+
+  function renderReportsList(reports) {
+    const list = document.getElementById("reports-list");
+    list.innerHTML = "";
+
+    if (!reports || reports.length === 0) {
+      list.innerHTML =
+        '<div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">No workflow runs yet</div>';
+      updateReportsBadge([]);
+      return;
+    }
+
+    reports.forEach((report) => {
+      const hasReport = report.has_report;
+      const iconClass =
+        report.conclusion === "failure" ? "icon-fail" : hasReport ? "icon-pass" : "icon-pass";
+      const icon = iconClass === "icon-fail" ? "ti-x" : "ti-check";
+
+      const row = document.createElement("div");
+      row.className = "report-row";
+      row.innerHTML = `
+        <div class="report-icon ${iconClass}"><i class="ti ${icon}"></i></div>
+        <div class="report-info">
+          <div class="report-name">${report.title}</div>
+          <div class="report-date">${formatReportDate(report.created_at)}</div>
+        </div>
+        <div class="report-stats">
+          <span style="color:var(--muted)">${formatConclusion(report.conclusion)}</span>
+        </div>
+        ${
+          hasReport
+            ? `<button class="btn-view" type="button"><i class="ti ti-eye"></i> View</button>`
+            : ""
+        }
+      `;
+
+      if (hasReport) {
+        row.querySelector(".btn-view").onclick = () => {
+          renderReportsDetail(report);
+          document.getElementById("reports-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        };
       }
+
+      list.appendChild(row);
+    });
+
+    updateReportsBadge(reports);
+  }
+
+  async function loadReports() {
+    const list = document.getElementById("reports-list");
+    try {
+      const res = await fetch(CONFIG.reportsApi);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      renderReportsList(data.reports || []);
+    } catch (err) {
+      list.innerHTML =
+        `<div class="suite-group-count" style="padding:0.5rem;color:var(--fail)">Could not load reports: ${err.message}</div>`;
+    }
+  }
+
+  async function waitForReport(runId) {
+    for (let attempt = 0; attempt < 15; attempt += 1) {
+      const res = await fetch(reportUrl(runId), { method: "HEAD" });
+      if (res.ok) return true;
       await sleep(CONFIG.pollIntervalMs);
     }
-    return null;
+    return false;
   }
 
   async function pollRunStatus(runId, { fill, label }, suiteLabel) {
@@ -897,24 +896,22 @@
       label.textContent = formatRunLabel(data);
 
       if (data.status === "completed") {
-        label.textContent =
-          data.conclusion === "success" ? "Completed — loading report…" : "Completed — loading report…";
+        label.textContent = "Completed — loading report…";
 
-        const results = await fetchRunResults(runId);
-        if (results) {
-          renderRunReport(results);
-          addToReportsHistory(suiteLabel, results);
-          appendLog(
-            results.stats.failed > 0 ? "fail" : "pass",
-            `  ${results.stats.passed} passed · ${results.stats.failed} failed · ${results.stats.total} total`
-          );
+        const ready = await waitForReport(runId);
+        if (ready) {
+          renderRunReport(runId);
+          await loadReports();
+          const outcome =
+            data.conclusion === "success"
+              ? "  ✓  Playwright report ready"
+              : "  ✗  Playwright report ready (run failed)";
+          appendLog(data.conclusion === "success" ? "pass" : "fail", outcome);
           label.textContent =
-            results.stats.failed > 0
-              ? `Done — ${results.stats.failed} failed`
-              : `Done — all ${results.stats.passed} passed`;
+            data.conclusion === "success" ? "Done — all tests passed" : "Done — tests failed";
         } else {
-          appendLog("warn", "  Results not ready yet — stay on this page and check Reports");
-          label.textContent = "Workflow done — results pending";
+          appendLog("warn", "  Report not ready yet — check Reports in a moment");
+          label.textContent = "Workflow done — report pending";
         }
         return;
       }
@@ -990,6 +987,7 @@
   }
 
   loadSuites();
+  loadReports();
 </script>
 </body>
 </html>

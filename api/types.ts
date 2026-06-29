@@ -35,3 +35,14 @@ export interface TriggerBody {
   test_paths?: string;
   retries?: number | string;
 }
+
+export interface ReportSummary {
+  run_id: number;
+  title: string;
+  created_at: string;
+  status: string;
+  conclusion: string | null;
+  html_url: string;
+  has_report: boolean;
+  report_url: string | null;
+}

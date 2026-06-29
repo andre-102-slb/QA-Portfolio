@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { downloadRunResults } from "./github";
+import { fetchRecentReports } from "./github";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -19,19 +19,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "GITHUB_TOKEN not configured on the server" });
   }
 
-  const runId = typeof req.query.run_id === "string" ? req.query.run_id : undefined;
-  if (!runId) {
-    return res.status(400).json({ error: "run_id is required" });
-  }
+  const limit =
+    typeof req.query.limit === "string" && Number(req.query.limit) > 0
+      ? Math.min(Number(req.query.limit), 20)
+      : 10;
 
   try {
-    const results = await downloadRunResults(token, runId);
-
-    if (!results) {
-      return res.status(404).json({ error: "Results not available yet" });
-    }
-
-    return res.status(200).json(results);
+    const reports = await fetchRecentReports(token, limit);
+    return res.status(200).json({ reports });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
