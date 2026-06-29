@@ -304,6 +304,48 @@
     .t-warn  { color: var(--warn); }
     .t-muted { color: var(--muted); }
 
+    /* ── Live run summary (Run tab) ── */
+    .run-live-summary {
+      margin-top: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: none;
+    }
+    .run-live-summary.show { display: block; }
+    .run-live-title {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .run-live-suites {
+      font-size: 12px;
+      color: var(--text);
+      font-family: var(--mono);
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .run-live-suites span { color: var(--muted); }
+    .report-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+    }
+    .report-metric {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+    }
+    .report-metric-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+    .report-metric-value { font-size: 20px; font-family: var(--mono); font-weight: 500; }
+
     /* ── Reports viewer (Reports tab only) ── */
     .reports-viewer {
       margin-top: 1rem;
@@ -509,6 +551,29 @@
           </div>
 
           <div class="terminal" id="terminal"></div>
+
+          <div class="run-live-summary" id="run-live-summary">
+            <div class="run-live-title">Live results</div>
+            <div class="run-live-suites"><span>Suites · </span><span id="live-suites">—</span></div>
+            <div class="report-summary">
+              <div class="report-metric">
+                <div class="report-metric-label">Total</div>
+                <div class="report-metric-value" id="live-total">—</div>
+              </div>
+              <div class="report-metric">
+                <div class="report-metric-label">Passed</div>
+                <div class="report-metric-value green" id="live-passed">—</div>
+              </div>
+              <div class="report-metric">
+                <div class="report-metric-label">Failed</div>
+                <div class="report-metric-value red" id="live-failed">—</div>
+              </div>
+              <div class="report-metric">
+                <div class="report-metric-label">Skipped</div>
+                <div class="report-metric-value" id="live-skipped">—</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -576,6 +641,7 @@
     triggerApi: "/api/trigger",
     suitesApi: "/api/suites",
     statusApi: "/api/status",
+    resultsApi: "/api/results",
     reportsApi: "/api/reports",
     pollIntervalMs: 4000,
   };
@@ -722,6 +788,33 @@
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
+  function showRunSummary(suiteLabel) {
+    document.getElementById("run-live-summary").classList.add("show");
+    document.getElementById("live-suites").textContent = suiteLabel || "—";
+    document.getElementById("live-total").textContent = "—";
+    document.getElementById("live-passed").textContent = "—";
+    document.getElementById("live-failed").textContent = "—";
+    document.getElementById("live-skipped").textContent = "—";
+  }
+
+  function clearRunSummary() {
+    document.getElementById("run-live-summary").classList.remove("show");
+    document.getElementById("live-suites").textContent = "—";
+    document.getElementById("live-total").textContent = "—";
+    document.getElementById("live-passed").textContent = "—";
+    document.getElementById("live-failed").textContent = "—";
+    document.getElementById("live-skipped").textContent = "—";
+  }
+
+  function renderRunSummary(suiteLabel, stats) {
+    document.getElementById("run-live-summary").classList.add("show");
+    document.getElementById("live-suites").textContent = suiteLabel || "—";
+    document.getElementById("live-total").textContent = stats.total;
+    document.getElementById("live-passed").textContent = stats.passed;
+    document.getElementById("live-failed").textContent = stats.failed;
+    document.getElementById("live-skipped").textContent = stats.skipped;
+  }
+
   function openReportsTab() {
     const btn = document.querySelector(".nav-item[data-section='reports']");
     if (btn) show("reports", btn);
@@ -836,19 +929,23 @@
     }
   }
 
-  async function waitForReport(runId) {
+  async function fetchRunResults(runId) {
     for (let attempt = 0; attempt < 15; attempt += 1) {
-      const res = await fetch(reportUrl(runId), { method: "HEAD" });
-      if (res.ok) return true;
+      const res = await fetch(`${CONFIG.resultsApi}?run_id=${runId}`);
+      if (res.ok) {
+        return await res.json();
+      }
       await sleep(CONFIG.pollIntervalMs);
     }
-    return false;
+    return null;
   }
 
   async function pollRunStatus(runId, { fill, label }, suiteLabel) {
     const loggedSteps = new Set();
     let lastStatus = "";
     const maxAttempts = 90;
+
+    showRunSummary(suiteLabel);
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const res = await fetch(`${CONFIG.statusApi}?run_id=${runId}`);
@@ -882,22 +979,23 @@
       label.textContent = formatRunLabel(data);
 
       if (data.status === "completed") {
-        label.textContent = "Completed — saving report…";
+        label.textContent = "Completed — loading results…";
 
-        const ready = await waitForReport(runId);
-        if (ready) {
+        const results = await fetchRunResults(runId);
+        if (results) {
+          renderRunSummary(suiteLabel, results.stats);
           await loadReports();
           appendLog(
-            data.conclusion === "success" ? "pass" : "fail",
-            data.conclusion === "success"
-              ? "  ✓  Report saved — open the Reports tab to view"
-              : "  ✗  Report saved — open the Reports tab to view"
+            results.stats.failed > 0 ? "fail" : "pass",
+            `  ${results.stats.passed} passed · ${results.stats.failed} failed · ${results.stats.total} total`
           );
           label.textContent =
-            data.conclusion === "success" ? "Done — all tests passed" : "Done — tests failed";
+            results.stats.failed > 0
+              ? `Done — ${results.stats.failed} failed`
+              : `Done — all ${results.stats.passed} passed`;
         } else {
-          appendLog("warn", "  Report not ready yet — check Reports in a moment");
-          label.textContent = "Workflow done — report pending";
+          appendLog("warn", "  Results not ready yet — check Reports in a moment");
+          label.textContent = "Workflow done — results pending";
         }
         return;
       }
@@ -929,6 +1027,7 @@
     btn.innerHTML = "<i class=\"ti ti-loader\"></i> Running…";
     term.innerHTML = "";
     term.classList.add("show");
+    clearRunSummary();
     wrap.style.display = "block";
     fill.style.width = "10%";
     label.textContent = "Dispatching workflow…";

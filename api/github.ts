@@ -1,5 +1,6 @@
 import AdmZip from "adm-zip";
-import type { ReportSummary } from "./types";
+import { parsePlaywrightResults } from "./parse-results";
+import type { ParsedResults, ReportSummary } from "./types";
 
 export const GITHUB_REPO = process.env.GITHUB_REPO ?? "andre-102-slb/QA-Portfolio";
 export const GITHUB_REF = process.env.GITHUB_REF ?? "main";
@@ -213,6 +214,23 @@ export async function getReportFile(
 
 export function reportPublicUrl(runId: string | number): string {
   return `/api/report/${runId}/index.html`;
+}
+
+export async function downloadRunResults(
+  token: string,
+  runId: string
+): Promise<ParsedResults | null> {
+  const zip = await getCachedReportZip(token, runId);
+  if (!zip) return null;
+
+  const entry =
+    findZipEntry(zip, "results.json") ??
+    zip.getEntries().find((item) => item.entryName.endsWith("/results.json")) ??
+    null;
+
+  if (!entry) return null;
+
+  return parsePlaywrightResults(JSON.parse(entry.getData().toString("utf8")));
 }
 
 export async function fetchRecentReports(token: string, limit = 10): Promise<ReportSummary[]> {
