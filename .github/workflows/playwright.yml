@@ -66,7 +66,7 @@ jobs:
         env:
           RUN_NAME: ${{ github.event.inputs.run_name }}
         run: |
-          node -e "const fs=require('fs'); const n=process.env.RUN_NAME?.trim(); fs.writeFileSync('playwright-report/run-meta.json', JSON.stringify({ name: n || 'Playwright Tests' }));"
+          node -e "const fs=require('fs'); const n=(process.env.RUN_NAME||'').trim(); if(n) fs.writeFileSync('playwright-report/run-meta.json', JSON.stringify({ name: n }));"
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

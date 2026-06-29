@@ -280,7 +280,14 @@
       outline: none;
     }
     .run-name-input:focus { border-color: var(--accent-bd); }
+    .run-name-input.input-error { border-color: var(--fail); }
     .run-name-input::placeholder { color: var(--muted); }
+    .field-error {
+      font-size: 12px;
+      color: var(--fail);
+      margin-top: 6px;
+    }
+    .suite-error-wrap { margin-bottom: 0.75rem; }
 
     .actions-link {
       display: inline-flex;
@@ -373,6 +380,62 @@
     .report-metric-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
     .report-metric-value { font-size: 20px; font-family: var(--mono); font-weight: 500; }
 
+    .live-tests-wrap { margin-top: 1rem; }
+    .live-tests-heading {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+    .live-tests-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .live-tests-table th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .live-tests-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      vertical-align: top;
+    }
+    .live-tests-table tr:last-child td { border-bottom: none; }
+    .live-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: var(--mono);
+    }
+    .live-status-pass { background: rgba(63,185,80,.15); color: var(--pass); }
+    .live-status-fail { background: rgba(248,81,73,.15); color: var(--fail); }
+    .live-status-skip { background: rgba(227,179,65,.15); color: var(--warn); }
+    .live-results-hint {
+      margin-top: 0.75rem;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .live-results-hint button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: var(--sans);
+      padding: 0;
+      text-decoration: underline;
+    }
+
     /* ── Reports viewer (inline under each run) ── */
     .report-item { display: flex; flex-direction: column; gap: 8px; }
     .reports-viewer {
@@ -449,6 +512,11 @@
       font-family: var(--sans);
     }
     .btn-view:hover { border-color: var(--accent-bd); color: var(--accent); }
+    .btn-view.is-open {
+      border-color: var(--accent-bd);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
 
     /* ── Metrics ── */
     .metrics-grid {
@@ -554,6 +622,9 @@
         </div>
 
         <div class="suite-tree" id="suite-tree"></div>
+        <div class="suite-error-wrap">
+          <div class="field-error" id="suite-error" hidden></div>
+        </div>
 
         <div class="run-panel">
           <div class="run-panel-label">Options</div>
@@ -572,6 +643,7 @@
               placeholder="e.g. Smoke before release"
               maxlength="120"
             />
+            <div class="field-error" id="run-name-error" hidden></div>
           </div>
 
           <button class="btn-run" id="run-btn" onclick="runTests()">
@@ -608,6 +680,23 @@
                 <div class="report-metric-label">Skipped</div>
                 <div class="report-metric-value" id="live-skipped">—</div>
               </div>
+            </div>
+            <div class="live-tests-wrap" id="live-tests-wrap" hidden>
+              <div class="live-tests-heading">Tests</div>
+              <table class="live-tests-table">
+                <thead>
+                  <tr>
+                    <th>Test</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="live-tests-tbody"></tbody>
+              </table>
+              <p class="live-results-hint">
+                For traces, screenshots and full details, open the
+                <button type="button" onclick="openReportsTab()">Reports</button>
+                tab and select this run.
+              </p>
             </div>
           </div>
         </div>
@@ -691,8 +780,35 @@
     if (id !== "reports") hideReportsViewer();
   }
 
+  function clearRunValidationErrors() {
+    const suiteErr = document.getElementById("suite-error");
+    const nameErr = document.getElementById("run-name-error");
+    const nameInput = document.getElementById("run-name");
+    if (suiteErr) suiteErr.hidden = true;
+    if (nameErr) nameErr.hidden = true;
+    if (nameInput) nameInput.classList.remove("input-error");
+  }
+
+  function showSuiteError(message) {
+    const el = document.getElementById("suite-error");
+    el.textContent = message;
+    el.hidden = false;
+  }
+
+  function showRunNameError(message) {
+    const el = document.getElementById("run-name-error");
+    const input = document.getElementById("run-name");
+    el.textContent = message;
+    el.hidden = false;
+    input.classList.add("input-error");
+  }
+
   function toggleSuite(el) {
     el.classList.toggle("selected");
+    const suiteErr = document.getElementById("suite-error");
+    if (suiteErr && !suiteErr.hidden && getSelectedPaths().length > 0) {
+      suiteErr.hidden = true;
+    }
   }
 
   function renderSuiteTree(suites) {
@@ -834,6 +950,39 @@
     document.getElementById("live-passed").textContent = "—";
     document.getElementById("live-failed").textContent = "—";
     document.getElementById("live-skipped").textContent = "—";
+    clearLiveTests();
+  }
+
+  function clearLiveTests() {
+    document.getElementById("live-tests-wrap").hidden = true;
+    document.getElementById("live-tests-tbody").innerHTML = "";
+  }
+
+  function renderLiveTests(tests) {
+    const wrap = document.getElementById("live-tests-wrap");
+    const tbody = document.getElementById("live-tests-tbody");
+
+    if (!tests || tests.length === 0) {
+      clearLiveTests();
+      return;
+    }
+
+    tbody.innerHTML = tests
+      .map((test) => {
+        const statusClass =
+          test.status === "passed"
+            ? "live-status-pass"
+            : test.status === "failed"
+              ? "live-status-fail"
+              : "live-status-skip";
+        return `<tr>
+          <td>${test.title}</td>
+          <td><span class="live-status ${statusClass}">${test.status}</span></td>
+        </tr>`;
+      })
+      .join("");
+
+    wrap.hidden = false;
   }
 
   function clearRunSummary() {
@@ -845,9 +994,10 @@
     document.getElementById("live-passed").textContent = "—";
     document.getElementById("live-failed").textContent = "—";
     document.getElementById("live-skipped").textContent = "—";
+    clearLiveTests();
   }
 
-  function renderRunSummary(suiteLabel, stats, runName) {
+  function renderRunSummary(suiteLabel, stats, runName, tests) {
     document.getElementById("run-live-summary").classList.add("show");
     const nameEl = document.getElementById("live-run-name");
     if (runName) {
@@ -862,6 +1012,7 @@
     document.getElementById("live-passed").textContent = stats.passed;
     document.getElementById("live-failed").textContent = stats.failed;
     document.getElementById("live-skipped").textContent = stats.skipped;
+    renderLiveTests(tests);
   }
 
   function openReportsTab() {
@@ -869,25 +1020,55 @@
     if (btn) show("reports", btn);
   }
 
+  function setReportToggleButton(btn, isOpen) {
+    if (!btn) return;
+    if (isOpen) {
+      btn.innerHTML = '<i class="ti ti-chevron-up"></i>';
+      btn.setAttribute("aria-label", "Close report");
+    } else {
+      btn.innerHTML = '<i class="ti ti-eye"></i> View';
+      btn.setAttribute("aria-label", "View report");
+    }
+    btn.classList.toggle("is-open", isOpen);
+  }
+
   function hideReportsViewer() {
     document.querySelectorAll(".report-item-viewer.show").forEach((viewer) => {
       viewer.classList.remove("show");
       const frame = viewer.querySelector(".report-frame");
       if (frame) frame.src = "about:blank";
+      const item = viewer.closest(".report-item");
+      const row = item?.querySelector(".report-row");
+      const btn = item?.querySelector(".btn-view");
+      if (row) row.classList.remove("active");
+      setReportToggleButton(btn, false);
     });
-    document.querySelectorAll(".report-row.active").forEach((row) => row.classList.remove("active"));
   }
 
-  function openReportInReportsTab(report, viewerEl, rowEl) {
+  function closeReportViewer(viewerEl, rowEl, toggleBtn) {
+    viewerEl.classList.remove("show");
+    const frame = viewerEl.querySelector(".report-frame");
+    if (frame) frame.src = "about:blank";
+    rowEl.classList.remove("active");
+    setReportToggleButton(toggleBtn, false);
+  }
+
+  function toggleReportViewer(report, viewerEl, rowEl, toggleBtn) {
     if (!report?.has_report || !report.report_url || !viewerEl) return;
+
+    if (viewerEl.classList.contains("show")) {
+      closeReportViewer(viewerEl, rowEl, toggleBtn);
+      return;
+    }
+
     hideReportsViewer();
     rowEl.classList.add("active");
-    const titleEl = viewerEl.querySelector(".reports-viewer-title");
-    titleEl.textContent = report.title;
+    viewerEl.querySelector(".reports-viewer-title").textContent = report.title;
     const frame = viewerEl.querySelector(".report-frame");
     frame.title = report.title;
     viewerEl.classList.add("show");
     frame.src = reportUrl(report.run_id);
+    setReportToggleButton(toggleBtn, true);
     viewerEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -953,7 +1134,7 @@
         </div>
         ${
           hasReport
-            ? `<button class="btn-view" type="button"><i class="ti ti-eye"></i> View</button>`
+            ? `<button class="btn-view" type="button" aria-label="View report"><i class="ti ti-eye"></i> View</button>`
             : ""
         }
       `;
@@ -966,16 +1147,17 @@
           <iframe class="report-frame" title="Playwright report"></iframe>
         `;
 
-        const openViewer = () => openReportInReportsTab(report, viewer, row);
+        const toggleBtn = row.querySelector(".btn-view");
+        const toggleViewer = () => toggleReportViewer(report, viewer, row, toggleBtn);
 
-        row.querySelector(".btn-view").onclick = (e) => {
+        toggleBtn.onclick = (e) => {
           e.stopPropagation();
-          openViewer();
+          toggleViewer();
         };
         row.style.cursor = "pointer";
         row.onclick = (e) => {
           if (e.target.closest(".btn-view")) return;
-          openViewer();
+          toggleViewer();
         };
 
         item.appendChild(row);
@@ -1034,7 +1216,7 @@
         return;
       }
 
-      const statusTitle = runName || data.display_title || "Playwright Tests";
+      const statusTitle = runName || data.display_title || "Run";
       const statusLine = `${data.status} — ${statusTitle}`;
       if (statusLine !== lastStatus) {
         appendLog("info", "  " + statusLine);
@@ -1062,7 +1244,7 @@
 
         const results = await fetchRunResults(runId);
         if (results) {
-          renderRunSummary(suiteLabel, results.stats, runName);
+          renderRunSummary(suiteLabel, results.stats, runName, results.tests);
           await loadReports();
           appendLog(
             results.stats.failed > 0 ? "fail" : "pass",
@@ -1086,9 +1268,17 @@
   }
 
   async function runTests() {
+    clearRunValidationErrors();
+
     const paths = getSelectedPaths();
     if (paths.length === 0) {
-      alert("Select at least one suite to run.");
+      showSuiteError("Selecione pelo menos um suite de testes.");
+      return;
+    }
+
+    const runName = document.getElementById("run-name").value.trim();
+    if (!runName) {
+      showRunNameError("Precisa de inserir um nome.");
       return;
     }
 
@@ -1101,7 +1291,6 @@
     const retries = getRetries();
     const command = buildRunCommand();
     const suiteLabel = paths.map((p) => p.split("/").slice(-2).join("/")).join(", ");
-    const runName = document.getElementById("run-name").value.trim();
 
     btn.disabled = true;
     btn.innerHTML = "<i class=\"ti ti-loader\"></i> Running…";
@@ -1113,7 +1302,7 @@
     label.textContent = "Dispatching workflow…";
 
     appendLog("info", "▶  Starting test run");
-    if (runName) appendLog("info", "  Run · " + runName);
+    appendLog("info", "  Run · " + runName);
     appendLog("muted", "$ " + command);
 
     try {
@@ -1150,6 +1339,14 @@
     btn.disabled = false;
     btn.innerHTML = "<i class=\"ti ti-player-play\"></i> Run selected";
   }
+
+  document.getElementById("run-name").addEventListener("input", () => {
+    const nameErr = document.getElementById("run-name-error");
+    if (nameErr && !nameErr.hidden) {
+      nameErr.hidden = true;
+      document.getElementById("run-name").classList.remove("input-error");
+    }
+  });
 
   loadSuites();
   loadReports();

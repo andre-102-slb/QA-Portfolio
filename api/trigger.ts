@@ -33,6 +33,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const retryCount = body.retries === 2 || body.retries === "2" ? "2" : "0";
   const runName =
     typeof body.run_name === "string" && body.run_name.trim() ? body.run_name.trim() : "";
+
+  if (!runName) {
+    return res.status(400).json({ error: "run_name is required" });
+  }
+
   const dispatchedAt = new Date();
 
   const response = await fetch(
