@@ -3,8 +3,8 @@
   "outputDirectory": "public",
   "rewrites": [
     {
-      "source": "/api/report/:runId/:file*",
-      "destination": "/api/report?run_id=:runId&file=:file*"
+      "source": "/api/report/:runId/:file(.*)",
+      "destination": "/api/report?run_id=:runId&file=:file"
     },
     {
       "source": "/api/report/:runId",
