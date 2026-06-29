@@ -12,19 +12,20 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d1117;
-      --surface:   #161b22;
-      --surface2:  #21262d;
-      --border:    #30363d;
-      --text:      #e6edf3;
-      --muted:     #8b949e;
-      --accent:    #7aa2f7;
-      --accent-bg: rgba(122, 162, 247, 0.10);
-      --accent-bd: rgba(122, 162, 247, 0.35);
-      --pass:      #3fb950;
-      --fail:      #f85149;
-      --warn:      #e3b341;
-      --info:      #58a6ff;
+      --bg:        #f4f5f7;
+      --surface:   #ffffff;
+      --surface2:  #f4f5f7;
+      --border:    #dfe1e6;
+      --text:      #172b4d;
+      --muted:     #5e6c84;
+      --accent:    #0052cc;
+      --accent-bg: rgba(0, 82, 204, 0.08);
+      --accent-bd: rgba(0, 82, 204, 0.35);
+      --on-accent: #ffffff;
+      --pass:      #00875a;
+      --fail:      #de350b;
+      --warn:      #974f0c;
+      --info:      #0052cc;
       --radius:    8px;
       --mono:      'JetBrains Mono', monospace;
       --sans:      'Inter', sans-serif;
@@ -96,8 +97,8 @@
       font-size: 10px;
       padding: 1px 6px;
       border-radius: 10px;
-      background: rgba(248, 81, 73, 0.15);
-      color: var(--fail);
+      background: #ffebe6;
+      color: #bf2600;
       font-family: var(--mono);
     }
     .nav-badge:empty,
@@ -212,7 +213,7 @@
       transition: border-color 0.15s, background 0.15s;
       user-select: none;
     }
-    .suite-leaf:hover { border-color: #58a6ff44; }
+    .suite-leaf:hover { border-color: var(--accent-bd); }
     .suite-leaf:has(input:checked) { border-color: var(--accent-bd); background: var(--accent-bg); }
     .suite-checkbox {
       appearance: none;
@@ -236,7 +237,7 @@
       top: 1px;
       width: 4px;
       height: 9px;
-      border: solid #0d1117;
+      border: solid var(--on-accent);
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
     }
@@ -249,8 +250,8 @@
       margin-top: 4px;
       font-family: var(--mono);
     }
-    .tag-e2e   { background: rgba(88,166,255,.12); color: #58a6ff; }
-    .tag-smoke { background: rgba(63,185,80,.12);  color: var(--pass); }
+    .tag-e2e   { background: #deebff; color: #0747a6; }
+    .tag-smoke { background: #e3fcef; color: #006644; }
 
     /* ── Run panel ── */
     .run-panel {
@@ -288,7 +289,7 @@
       gap: 7px;
       padding: 8px 18px;
       background: var(--accent);
-      color: #0d1117;
+      color: var(--on-accent);
       border: none;
       border-radius: var(--radius);
       font-size: 13px;
@@ -367,11 +368,11 @@
       display: none;
     }
     .terminal.show { display: block; }
-    .t-info  { color: #58a6ff; }
-    .t-pass  { color: var(--pass); }
-    .t-fail  { color: var(--fail); }
-    .t-warn  { color: var(--warn); }
-    .t-muted { color: var(--muted); }
+    .t-info  { color: #6cb6ff; }
+    .t-pass  { color: #4ade80; }
+    .t-fail  { color: #ff7b72; }
+    .t-warn  { color: #fbbf24; }
+    .t-muted { color: #8b949e; }
 
     /* ── Live run summary (Run tab) ── */
     .run-live-summary {
@@ -457,9 +458,9 @@
       font-size: 10px;
       font-family: var(--mono);
     }
-    .live-status-pass { background: rgba(63,185,80,.15); color: var(--pass); }
-    .live-status-fail { background: rgba(248,81,73,.15); color: var(--fail); }
-    .live-status-skip { background: rgba(227,179,65,.15); color: var(--warn); }
+    .live-status-pass { background: #e3fcef; color: #006644; }
+    .live-status-fail { background: #ffebe6; color: #bf2600; }
+    .live-status-skip { background: #fff7d6; color: #974f0c; }
     .live-results-hint {
       margin-top: 0.75rem;
       font-size: 12px;
@@ -537,7 +538,7 @@
       color: inherit;
       transition: border-color 0.15s;
     }
-    .report-row:hover { border-color: #58a6ff44; }
+    .report-row:hover { border-color: var(--accent-bd); }
     .report-row.active { border-color: var(--accent-bd); background: var(--accent-bg); }
     .report-icon {
       width: 34px;
@@ -549,8 +550,8 @@
       font-size: 17px;
       flex-shrink: 0;
     }
-    .icon-pass { background: rgba(63,185,80,.15); color: var(--pass); }
-    .icon-fail { background: rgba(248,81,73,.15);  color: var(--fail); }
+    .icon-pass { background: #e3fcef; color: #006644; }
+    .icon-fail { background: #ffebe6; color: #bf2600; }
     .report-info { flex: 1; min-width: 0; }
     .report-name { font-size: 13px; font-weight: 500; }
     .report-date { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
@@ -740,11 +741,11 @@
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
-    .case-badge.auto { background: rgba(63,185,80,.14); color: var(--pass); }
-    .case-badge.manual { background: rgba(227,179,65,.14); color: var(--warn); }
-    .case-badge.prio-high { background: rgba(248,81,73,.16); color: var(--fail); }
-    .case-badge.prio-medium { background: rgba(227,179,65,.16); color: var(--warn); }
-    .case-badge.prio-low { background: rgba(88,166,255,.16); color: #58a6ff; }
+    .case-badge.auto { background: #e3fcef; color: #006644; }
+    .case-badge.manual { background: #dfe1e6; color: #42526e; }
+    .case-badge.prio-high { background: #ffebe6; color: #bf2600; }
+    .case-badge.prio-medium { background: #fff7d6; color: #974f0c; }
+    .case-badge.prio-low { background: #deebff; color: #0747a6; }
     .case-tag {
       font-size: 10px;
       padding: 2px 8px;
