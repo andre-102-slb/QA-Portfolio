@@ -10,7 +10,12 @@ on:
       test_paths:
         description: "Test paths (space-separated)"
         required: false
-        default: "frontend-tests/smoke frontend-tests/regression"
+        default: "frontend-tests/smoke/login frontend-tests/regression/login"
+        type: string
+      retries:
+        description: "Retries on failure (0 or 2)"
+        required: false
+        default: "0"
         type: string
 
 jobs:
@@ -32,13 +37,14 @@ jobs:
 
       - name: Run Playwright tests
         run: |
+          RETRIES="${{ github.event.inputs.retries }}"
+          if [ -z "$RETRIES" ]; then RETRIES=0; fi
+
           if [ -n "${{ github.event.inputs.test_paths }}" ]; then
-            npx playwright test ${{ github.event.inputs.test_paths }}
+            npx playwright test ${{ github.event.inputs.test_paths }} --retries="$RETRIES"
           else
-            npx playwright test
+            npx playwright test --retries="$RETRIES"
           fi
-        env:
-          BASE_URL: https://www.saucedemo.com/
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "generate:suites": "node scripts/generate-suites.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andre-102-slb/QA-Portfolio.git"

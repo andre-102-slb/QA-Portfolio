@@ -149,36 +149,68 @@
     .section { display: none; }
     .section.active { display: block; }
 
-    /* ── Suite cards ── */
-    .suite-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    /* ── Suite tree ── */
+    .suite-tree {
+      display: flex;
+      flex-direction: column;
       gap: 10px;
       margin-bottom: 1.25rem;
     }
-    .suite-card {
+    .suite-group {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 0.875rem 1rem;
+    }
+    .suite-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .suite-group-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .suite-group-count {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .suite-children {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-left: 0.5rem;
+      border-left: 1px solid var(--border);
+      margin-left: 0.25rem;
+    }
+    .suite-leaf {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
       user-select: none;
     }
-    .suite-card:hover { border-color: #58a6ff44; }
-    .suite-card.selected { border-color: var(--accent-bd); background: var(--accent-bg); }
-    .suite-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
-    .suite-count { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+    .suite-leaf:hover { border-color: #58a6ff44; }
+    .suite-leaf.selected { border-color: var(--accent-bd); background: var(--accent-bg); }
+    .suite-leaf-name { font-size: 12px; font-family: var(--mono); }
+    .suite-leaf-count { font-size: 11px; color: var(--muted); font-family: var(--mono); }
     .suite-tag {
       display: inline-block;
       font-size: 10px;
       padding: 2px 7px;
       border-radius: 4px;
-      margin-top: 6px;
+      margin-top: 4px;
       font-family: var(--mono);
     }
     .tag-e2e   { background: rgba(88,166,255,.12); color: #58a6ff; }
-    .tag-api   { background: rgba(188,140,255,.12); color: #bc8cff; }
     .tag-smoke { background: rgba(63,185,80,.12);  color: var(--pass); }
 
     /* ── Run panel ── */
@@ -340,24 +372,6 @@
     .green { color: var(--pass); }
     .red   { color: var(--fail); }
 
-    /* ── Environment ── */
-    .env-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 10px;
-    }
-    .env-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem;
-    }
-    .env-title { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
-    .env-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); }
-    .env-row:last-child { border-bottom: none; }
-    .env-key { font-size: 12px; color: var(--muted); }
-    .env-val { font-size: 12px; color: var(--text); font-family: var(--mono); }
-
     /* ── Failures box ── */
     .failures-box {
       background: var(--surface);
@@ -407,9 +421,6 @@
 
     <div class="nav-section">
       <div class="nav-label">Info</div>
-      <button class="nav-item" data-section="env" onclick="show('env', this)">
-        <i class="ti ti-settings"></i> Environment
-      </button>
       <button class="nav-item" data-section="stats" onclick="show('stats', this)">
         <i class="ti ti-chart-bar"></i> Stats
       </button>
@@ -445,18 +456,7 @@
           <span class="section-desc">Select suites and run</span>
         </div>
 
-        <div class="suite-grid">
-          <div class="suite-card selected" data-path="frontend-tests/smoke" onclick="toggleSuite(this)">
-            <div class="suite-name">Smoke tests</div>
-            <div class="suite-count">1 test</div>
-            <span class="suite-tag tag-smoke">smoke</span>
-          </div>
-          <div class="suite-card selected" data-path="frontend-tests/regression" onclick="toggleSuite(this)">
-            <div class="suite-name">Regression</div>
-            <div class="suite-count">1 test</div>
-            <span class="suite-tag tag-e2e">e2e</span>
-          </div>
-        </div>
+        <div class="suite-tree" id="suite-tree"></div>
 
         <div class="run-panel">
           <div class="run-panel-label">Options</div>
@@ -467,11 +467,8 @@
             <button class="opt-toggle on" onclick="this.classList.toggle('on')">
               <i class="ti ti-file-description"></i> HTML report
             </button>
-            <button class="opt-toggle" onclick="this.classList.toggle('on')">
+            <button class="opt-toggle" id="opt-retry" onclick="this.classList.toggle('on')">
               <i class="ti ti-refresh"></i> Retry on fail
-            </button>
-            <button class="opt-toggle" onclick="this.classList.toggle('on')">
-              <i class="ti ti-video"></i> Video
             </button>
           </div>
 
@@ -553,40 +550,6 @@
         </div>
       </div>
 
-      <!-- ENVIRONMENT -->
-      <div class="section" id="sec-env">
-        <div class="section-header">
-          <span class="section-desc">Runtime environment</span>
-        </div>
-
-        <div class="env-grid">
-          <div class="env-card">
-            <div class="env-title">Docker</div>
-            <div class="env-row"><span class="env-key">Image</span><span class="env-val">playwright:v1.45</span></div>
-            <div class="env-row"><span class="env-key">Status</span><span class="env-val" style="color:var(--pass)">running</span></div>
-            <div class="env-row"><span class="env-key">OS</span><span class="env-val">Ubuntu 22.04</span></div>
-          </div>
-          <div class="env-card">
-            <div class="env-title">Browsers</div>
-            <div class="env-row"><span class="env-key">Chromium</span><span class="env-val">124.0.x</span></div>
-            <div class="env-row"><span class="env-key">Firefox</span><span class="env-val">125.0.x</span></div>
-            <div class="env-row"><span class="env-key">WebKit</span><span class="env-val">17.4</span></div>
-          </div>
-          <div class="env-card">
-            <div class="env-title">Stack</div>
-            <div class="env-row"><span class="env-key">Node</span><span class="env-val">20.14.0</span></div>
-            <div class="env-row"><span class="env-key">Playwright</span><span class="env-val">1.45.0</span></div>
-            <div class="env-row"><span class="env-key">TypeScript</span><span class="env-val">5.4.5</span></div>
-          </div>
-          <div class="env-card">
-            <div class="env-title">Config</div>
-            <div class="env-row"><span class="env-key">Base URL</span><span class="env-val">saucedemo.com</span></div>
-            <div class="env-row"><span class="env-key">Timeout</span><span class="env-val">30 000ms</span></div>
-            <div class="env-row"><span class="env-key">Workers</span><span class="env-val">4</span></div>
-          </div>
-        </div>
-      </div>
-
       <!-- STATS -->
       <div class="section" id="sec-stats">
         <div class="section-header">
@@ -631,10 +594,11 @@
     githubRepo: "andre-102-slb/QA-Portfolio",
     workflowFile: "playwright.yml",
     triggerApi: "/api/trigger",
+    suitesApi: "/api/suites",
   };
 
   const ACTIONS_URL = `https://github.com/${CONFIG.githubRepo}/actions/workflows/${CONFIG.workflowFile}`;
-  const titles = { run: "Run tests", reports: "Reports", env: "Environment", stats: "Stats" };
+  const titles = { run: "Run tests", reports: "Reports", stats: "Stats" };
 
   function show(id, btn) {
     document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
@@ -648,16 +612,97 @@
     el.classList.toggle("selected");
   }
 
+  function sumTests(children) {
+    return children.reduce((sum, child) => sum + child.tests, 0);
+  }
+
+  function renderSuiteTree(suites) {
+    const container = document.getElementById("suite-tree");
+    container.innerHTML = "";
+
+    suites.forEach((group) => {
+      const total = sumTests(group.children);
+      const groupEl = document.createElement("div");
+      groupEl.className = "suite-group";
+
+      const header = document.createElement("div");
+      header.className = "suite-group-header";
+      header.innerHTML = `
+        <div>
+          <div class="suite-group-name">${group.name}</div>
+          <span class="suite-tag tag-${group.tag}">${group.tag}</span>
+        </div>
+        <span class="suite-group-count">${total} test${total === 1 ? "" : "s"}</span>
+      `;
+
+      const childrenEl = document.createElement("div");
+      childrenEl.className = "suite-children";
+
+      group.children.forEach((child) => {
+        const leaf = document.createElement("div");
+        leaf.className = "suite-leaf selected";
+        leaf.dataset.path = child.path;
+        leaf.onclick = () => toggleSuite(leaf);
+        leaf.innerHTML = `
+          <span class="suite-leaf-name">${child.name}</span>
+          <span class="suite-leaf-count">${child.tests} test${child.tests === 1 ? "" : "s"}</span>
+        `;
+        childrenEl.appendChild(leaf);
+      });
+
+      groupEl.appendChild(header);
+      groupEl.appendChild(childrenEl);
+      container.appendChild(groupEl);
+    });
+  }
+
+  async function loadSuites() {
+    const container = document.getElementById("suite-tree");
+    container.innerHTML =
+      '<div class="suite-group-count" style="padding:0.5rem">Loading suites…</div>';
+
+    try {
+      const res = await fetch(CONFIG.suitesApi);
+      if (res.ok) {
+        const data = await res.json();
+        renderSuiteTree(data.suites);
+        return;
+      }
+    } catch {
+      /* fallback below */
+    }
+
+    try {
+      const res = await fetch("suites.json");
+      if (res.ok) {
+        const data = await res.json();
+        renderSuiteTree(data.suites);
+        return;
+      }
+    } catch {
+      /* show empty */
+    }
+
+    container.innerHTML =
+      '<div class="suite-group-count" style="padding:0.5rem;color:var(--fail)">Could not load suites</div>';
+  }
+
   function getSelectedPaths() {
-    return [...document.querySelectorAll(".suite-card.selected")].map(
+    return [...document.querySelectorAll(".suite-leaf.selected")].map(
       (el) => el.dataset.path
     );
   }
 
+  function getRetries() {
+    return document.getElementById("opt-retry").classList.contains("on") ? 2 : 0;
+  }
+
   function buildRunCommand() {
     const paths = getSelectedPaths();
-    if (paths.length === 0) return "npx playwright test";
-    return `npx playwright test ${paths.join(" ")}`;
+    const retries = getRetries();
+    const retryFlag = `--retries=${retries}`;
+    if (paths.length === 0) return `npx playwright test ${retryFlag}`;
+    return `npx playwright test ${paths.join(" ")} ${retryFlag}`;
   }
 
   function appendLog(cls, msg) {
@@ -683,6 +728,7 @@
     const fill = document.getElementById("progress-fill");
     const label = document.getElementById("progress-label");
     const testPaths = paths.join(" ");
+    const retries = getRetries();
     const command = buildRunCommand();
 
     btn.disabled = true;
@@ -700,7 +746,7 @@
       const res = await fetch(CONFIG.triggerApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test_paths: testPaths }),
+        body: JSON.stringify({ test_paths: testPaths, retries }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -713,6 +759,7 @@
       label.textContent = "Workflow dispatched — running on GitHub";
       appendLog("pass", "  ✓  Workflow dispatched successfully");
       appendLog("info", "  Suites: " + testPaths);
+      appendLog("info", "  Retries: " + retries);
       appendLog("info", "  Track run: " + ACTIONS_URL);
       appendLog("muted", "  Report artifact available after the run completes");
 
@@ -728,6 +775,8 @@
     btn.disabled = false;
     btn.innerHTML = "<i class=\"ti ti-player-play\"></i> Run selected";
   }
+
+  loadSuites();
 </script>
 </body>
 </html>

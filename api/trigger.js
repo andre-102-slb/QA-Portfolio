@@ -22,11 +22,12 @@ export default async function handler(req, res) {
     });
   }
 
-  const { test_paths } = req.body || {};
+  const { test_paths, retries } = req.body || {};
   const testPaths =
     typeof test_paths === "string" && test_paths.trim()
       ? test_paths.trim()
-      : "frontend-tests/smoke frontend-tests/regression";
+      : "frontend-tests/smoke/login frontend-tests/regression/login";
+  const retryCount = retries === 2 || retries === "2" ? "2" : "0";
 
   const response = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
@@ -39,7 +40,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         ref: GITHUB_REF,
-        inputs: { test_paths: testPaths },
+        inputs: { test_paths: testPaths, retries: retryCount },
       }),
     }
   );
@@ -52,6 +53,7 @@ export default async function handler(req, res) {
   return res.status(202).json({
     ok: true,
     test_paths: testPaths,
+    retries: retryCount,
     actions_url: `https://github.com/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}`,
   });
 }

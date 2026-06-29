@@ -1,0 +1,30 @@
+{
+  "suites": [
+    {
+      "id": "regression",
+      "name": "Regression Tests",
+      "path": "frontend-tests/regression",
+      "tag": "e2e",
+      "children": [
+        {
+          "name": "login",
+          "path": "frontend-tests/regression/login",
+          "tests": 1
+        }
+      ]
+    },
+    {
+      "id": "smoke",
+      "name": "Smoke Tests",
+      "path": "frontend-tests/smoke",
+      "tag": "smoke",
+      "children": [
+        {
+          "name": "login",
+          "path": "frontend-tests/smoke/login",
+          "tests": 1
+        }
+      ]
+    }
+  ]
+}
