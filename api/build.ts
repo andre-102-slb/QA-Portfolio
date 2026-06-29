@@ -12,8 +12,14 @@ fs.writeFileSync(
 
 fs.mkdirSync(publicDir, { recursive: true });
 
-for (const file of ["index.html", "suites.json"]) {
-  fs.copyFileSync(path.join(root, file), path.join(publicDir, file));
-}
+const buildId = new Date().toISOString();
+
+const indexSrc = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const indexOut = indexSrc.replace(
+  "<!-- BUILD_ID -->",
+  `<!-- build ${buildId} -->`
+);
+fs.writeFileSync(path.join(publicDir, "index.html"), indexOut);
+fs.copyFileSync(path.join(root, "suites.json"), path.join(publicDir, "suites.json"));
 
 console.log("Build complete — public/ ready for Vercel");
