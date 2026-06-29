@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <!-- BUILD_ID -->
@@ -133,6 +133,7 @@
     .btn-ghost {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 5px;
       font-size: 12px;
       color: var(--muted);
@@ -143,6 +144,7 @@
       cursor: pointer;
       transition: all 0.15s;
       font-family: var(--sans);
+      text-align: center;
     }
     .btn-ghost:hover { border-color: var(--accent-bd); color: var(--accent); }
 
@@ -228,6 +230,7 @@
     .opt-toggle {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       font-size: 12px;
       color: var(--muted);
@@ -238,6 +241,7 @@
       cursor: pointer;
       transition: all 0.15s;
       font-family: var(--sans);
+      text-align: center;
     }
     .opt-toggle.on { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-bd); }
     .opt-toggle i { font-size: 14px; }
@@ -245,6 +249,7 @@
     .btn-run {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 7px;
       padding: 8px 18px;
       background: var(--accent);
@@ -256,6 +261,7 @@
       cursor: pointer;
       transition: opacity 0.15s;
       font-family: var(--sans);
+      text-align: center;
     }
     .btn-run:hover   { opacity: 0.88; }
     .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -434,6 +440,19 @@
       font-family: var(--sans);
       padding: 0;
       text-decoration: underline;
+      text-align: center;
+    }
+
+    .inline-link-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: inherit;
+      font-family: var(--sans);
+      padding: 0;
+      text-decoration: underline;
+      text-align: center;
     }
 
     /* ── Reports viewer (inline under each run) ── */
@@ -463,6 +482,14 @@
 
     /* ── Reports ── */
     .reports-list { display: flex; flex-direction: column; gap: 8px; }
+    .reports-empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .reports-empty p + p { margin-top: 0.5rem; }
     .report-row {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -498,6 +525,7 @@
     .btn-view {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 5px;
       font-size: 11px;
       padding: 4px 10px;
@@ -510,6 +538,7 @@
       flex-shrink: 0;
       transition: all 0.15s;
       font-family: var(--sans);
+      text-align: center;
     }
     .btn-view:hover { border-color: var(--accent-bd); color: var(--accent); }
     .btn-view.is-open {
@@ -1015,6 +1044,11 @@
     renderLiveTests(tests);
   }
 
+  function openRunTab() {
+    const btn = document.querySelector(".nav-item[data-section='run']");
+    if (btn) show("run", btn);
+  }
+
   function openReportsTab() {
     const btn = document.querySelector(".nav-item[data-section='reports']");
     if (btn) show("reports", btn);
@@ -1106,8 +1140,12 @@
     list.innerHTML = "";
 
     if (!reports || reports.length === 0) {
-      list.innerHTML =
-        '<div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">No dashboard runs yet — use Run selected</div>';
+      list.innerHTML = `
+        <div class="reports-empty">
+          <p>No reports yet.</p>
+          <p>Run a test suite from the <button type="button" class="inline-link-btn" onclick="openRunTab()">Run tests</button> tab to generate your first report.</p>
+        </div>
+      `;
       updateReportsBadge([]);
       return;
     }
@@ -1272,13 +1310,13 @@
 
     const paths = getSelectedPaths();
     if (paths.length === 0) {
-      showSuiteError("Selecione pelo menos um suite de testes.");
+      showSuiteError("Select at least one test suite.");
       return;
     }
 
     const runName = document.getElementById("run-name").value.trim();
     if (!runName) {
-      showRunNameError("Precisa de inserir um nome.");
+      showRunNameError("Enter a run name.");
       return;
     }
 
