@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getReportFile } from "../github";
+import { getReportFile } from "./github";
 
 function contentTypeForPath(filePath: string): string {
   const lower = filePath.toLowerCase();
@@ -17,6 +17,21 @@ function contentTypeForPath(filePath: string): string {
   return "application/octet-stream";
 }
 
+function parseReportRequest(req: VercelRequest): { runId: string; filePath: string } | null {
+  const runIdFromQuery = typeof req.query.run_id === "string" ? req.query.run_id : undefined;
+  const fileFromQuery = typeof req.query.file === "string" ? req.query.file : undefined;
+
+  if (runIdFromQuery) {
+    return { runId: runIdFromQuery, filePath: fileFromQuery || "index.html" };
+  }
+
+  const pathname = (req.url ?? "").split("?")[0];
+  const match = pathname.match(/^\/api\/report\/([^/]+)\/?(.*)$/);
+  if (!match) return null;
+
+  return { runId: match[1], filePath: match[2] || "index.html" };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET" && req.method !== "HEAD") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -27,14 +42,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "GITHUB_TOKEN not configured on the server" });
   }
 
-  const slug = req.query.slug;
-  const parts = Array.isArray(slug) ? slug : typeof slug === "string" ? [slug] : [];
-  if (parts.length === 0) {
+  const parsed = parseReportRequest(req);
+  if (!parsed) {
     return res.status(400).json({ error: "Invalid report path" });
   }
 
-  const runId = parts[0];
-  const filePath = parts.slice(1).join("/") || "index.html";
+  const { runId, filePath } = parsed;
 
   try {
     const file = await getReportFile(token, runId, filePath);
