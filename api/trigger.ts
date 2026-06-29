@@ -4,8 +4,8 @@ import {
   GITHUB_REF,
   WORKFLOW_FILE,
   findRunAfterDispatch,
-} from "./github";
-import type { TriggerBody } from "./types";
+} from "../lib/github";
+import type { TriggerBody } from "../lib/types";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getReportFile } from "./github";
+import { getReportFile } from "../lib/github";
 
 function contentTypeForPath(filePath: string): string {
   const lower = filePath.toLowerCase();

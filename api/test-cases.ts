@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { listTestCases, getTestCaseById } from "./list-test-cases";
+import { listTestCases, getTestCaseById } from "../lib/list-test-cases";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");

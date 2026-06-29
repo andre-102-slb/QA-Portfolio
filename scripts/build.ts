@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
-import { listSuites } from "./list-suites";
-import { listTestCasesWithContent } from "./list-test-cases";
+import { listSuites } from "../lib/list-suites";
+import { listTestCasesWithContent } from "../lib/list-test-cases";
 
 const root = path.join(__dirname, "..");
 const publicDir = path.join(root, "public");

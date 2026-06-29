@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsx api/build.ts",
+    "build": "tsx scripts/build.ts",
     "typecheck": "tsc --noEmit"
   },
   "repository": {
