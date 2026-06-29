@@ -373,9 +373,9 @@
     .report-metric-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
     .report-metric-value { font-size: 20px; font-family: var(--mono); font-weight: 500; }
 
-    /* ── Reports viewer (Reports tab only) ── */
+    /* ── Reports viewer (inline under each run) ── */
+    .report-item { display: flex; flex-direction: column; gap: 8px; }
     .reports-viewer {
-      margin-top: 1rem;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -384,10 +384,9 @@
     }
     .reports-viewer.show { display: block; }
     .reports-viewer-title {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
       margin-bottom: 0.75rem;
     }
     .report-frame {
@@ -414,6 +413,7 @@
       transition: border-color 0.15s;
     }
     .report-row:hover { border-color: #58a6ff44; }
+    .report-row.active { border-color: var(--accent-bd); background: var(--accent-bg); }
     .report-icon {
       width: 34px;
       height: 34px;
@@ -623,11 +623,6 @@
           <div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">
             Loading reports…
           </div>
-        </div>
-
-        <div class="reports-viewer" id="reports-detail">
-          <div class="reports-viewer-title">Playwright report</div>
-          <iframe class="report-frame" id="reports-detail-frame" title="Playwright report"></iframe>
         </div>
       </div>
 
@@ -875,16 +870,25 @@
   }
 
   function hideReportsViewer() {
-    document.getElementById("reports-detail").classList.remove("show");
-    document.getElementById("reports-detail-frame").src = "about:blank";
+    document.querySelectorAll(".report-item-viewer.show").forEach((viewer) => {
+      viewer.classList.remove("show");
+      const frame = viewer.querySelector(".report-frame");
+      if (frame) frame.src = "about:blank";
+    });
+    document.querySelectorAll(".report-row.active").forEach((row) => row.classList.remove("active"));
   }
 
-  function openReportInReportsTab(report) {
-    if (!report?.has_report || !report.report_url) return;
-    openReportsTab();
-    document.getElementById("reports-detail").classList.add("show");
-    document.getElementById("reports-detail-frame").src = reportUrl(report.run_id);
-    document.getElementById("reports-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  function openReportInReportsTab(report, viewerEl, rowEl) {
+    if (!report?.has_report || !report.report_url || !viewerEl) return;
+    hideReportsViewer();
+    rowEl.classList.add("active");
+    const titleEl = viewerEl.querySelector(".reports-viewer-title");
+    titleEl.textContent = report.title;
+    const frame = viewerEl.querySelector(".report-frame");
+    frame.title = report.title;
+    viewerEl.classList.add("show");
+    frame.src = reportUrl(report.run_id);
+    viewerEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function formatConclusion(conclusion) {
@@ -933,6 +937,9 @@
         report.conclusion === "failure" ? "icon-fail" : hasReport ? "icon-pass" : "icon-pass";
       const icon = iconClass === "icon-fail" ? "ti-x" : "ti-check";
 
+      const item = document.createElement("div");
+      item.className = "report-item";
+
       const row = document.createElement("div");
       row.className = "report-row";
       row.innerHTML = `
@@ -952,15 +959,32 @@
       `;
 
       if (hasReport) {
-        row.querySelector(".btn-view").onclick = () => openReportInReportsTab(report);
+        const viewer = document.createElement("div");
+        viewer.className = "reports-viewer report-item-viewer";
+        viewer.innerHTML = `
+          <div class="reports-viewer-title"></div>
+          <iframe class="report-frame" title="Playwright report"></iframe>
+        `;
+
+        const openViewer = () => openReportInReportsTab(report, viewer, row);
+
+        row.querySelector(".btn-view").onclick = (e) => {
+          e.stopPropagation();
+          openViewer();
+        };
         row.style.cursor = "pointer";
         row.onclick = (e) => {
           if (e.target.closest(".btn-view")) return;
-          openReportInReportsTab(report);
+          openViewer();
         };
+
+        item.appendChild(row);
+        item.appendChild(viewer);
+      } else {
+        item.appendChild(row);
       }
 
-      list.appendChild(row);
+      list.appendChild(item);
     });
 
     updateReportsBadge(reports);
