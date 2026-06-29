@@ -8,8 +8,7 @@
       "children": [
         {
           "name": "login",
-          "path": "frontend-tests/regression/login",
-          "tests": 2
+          "path": "frontend-tests/regression/login"
         }
       ]
     },
@@ -21,8 +20,7 @@
       "children": [
         {
           "name": "login",
-          "path": "frontend-tests/smoke/login",
-          "tests": 2
+          "path": "frontend-tests/smoke/login"
         }
       ]
     }

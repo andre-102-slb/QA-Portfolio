@@ -1,4 +1,4 @@
-const { buildSuites } = require("../lib/build-suites");
+const { listSuites } = require("./list-suites");
 
 module.exports = (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -14,8 +14,7 @@ module.exports = (req, res) => {
   }
 
   try {
-    const suites = buildSuites();
-    return res.status(200).json({ suites });
+    return res.status(200).json({ suites: listSuites() });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

@@ -1,8 +1,11 @@
-const GITHUB_REPO = process.env.GITHUB_REPO || "andre-102-slb/QA-Portfolio";
-const GITHUB_REF = process.env.GITHUB_REF || "main";
-const WORKFLOW_FILE = "playwright.yml";
+const {
+  GITHUB_REPO,
+  WORKFLOW_FILE,
+  GITHUB_REF,
+  findRunAfterDispatch,
+} = require("./github");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -28,6 +31,7 @@ export default async function handler(req, res) {
       ? test_paths.trim()
       : "frontend-tests/smoke/login frontend-tests/regression/login";
   const retryCount = retries === 2 || retries === "2" ? "2" : "0";
+  const dispatchedAt = new Date();
 
   const response = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
@@ -50,10 +54,14 @@ export default async function handler(req, res) {
     return res.status(response.status).json({ error });
   }
 
+  const run = await findRunAfterDispatch(token, dispatchedAt);
+
   return res.status(202).json({
     ok: true,
     test_paths: testPaths,
     retries: retryCount,
+    run_id: run?.id ?? null,
+    run_url: run?.html_url ?? null,
     actions_url: `https://github.com/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}`,
   });
-}
+};
