@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": "SMK-LOGIN-01",
+      "title": "Verify if the username and password fields are visible and clickable",
+      "feature": "login",
+      "suite": "login",
+      "group": "smoke",
+      "priority": "high",
+      "tags": [
+        "smoke",
+        "login"
+      ],
+      "automated": true,
+      "automation": {
+        "path": "frontend-tests/smoke/login/example.spec.ts",
+        "test": "Verify if the username and password fields are visible and clickable"
+      },
+      "file": "test-cases/login/SMK-LOGIN-01.md",
+      "body": "## Scenario\n\nThe user should visit the website and they should be able to see if the username and password fields are visible and clickable.\n\n## Steps and expectations\n\n1. Go to \"https://www.saucedemo.com/\"\n\n- Expect Result:\n  - User should be able to navigate to the website\n\n2. Verify if the username and password fields appears\n\n- Expect Result:\n  - User should be able to see the username and password fields and check if they are clickable",
+      "bodyHtml": "<h2>Scenario</h2>\n<p>The user should visit the website and they should be able to see if the username and password fields are visible and clickable.</p>\n<h2>Steps and expectations</h2>\n<p>1. Go to \"https://www.saucedemo.com/\"</p>\n<p>- Expect Result:   - User should be able to navigate to the website</p>\n<p>2. Verify if the username and password fields appears</p>\n<p>- Expect Result:   - User should be able to see the username and password fields and check if they are clickable</p>"
+    }
+  ]
+}

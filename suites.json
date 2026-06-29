@@ -7,6 +7,10 @@
       "tag": "e2e",
       "children": [
         {
+          "name": "catalog",
+          "path": "frontend-tests/regression/catalog"
+        },
+        {
           "name": "login",
           "path": "frontend-tests/regression/login"
         }

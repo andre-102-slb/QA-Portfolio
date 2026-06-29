@@ -29,6 +29,9 @@
     "api/suites.ts": {
       "includeFiles": "frontend-tests/**"
     },
+    "api/test-cases.ts": {
+      "includeFiles": "test-cases/**"
+    },
     "api/report.ts": {
       "maxDuration": 60
     }

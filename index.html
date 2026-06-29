@@ -586,6 +586,122 @@
     }
     .section-desc { font-size: 12px; color: var(--muted); }
 
+    /* ── Test case sidebar list ── */
+    .case-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 0 0.5rem 0.75rem;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .case-nav-feature {
+      font-size: 10px;
+      color: var(--muted);
+      padding: 6px 0.75rem 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .case-nav-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+      padding: 7px 0.75rem;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--sans);
+      transition: background 0.15s, color 0.15s;
+    }
+    .case-nav-item:hover { background: var(--surface2); color: var(--text); }
+    .case-nav-item.active { background: var(--accent-bg); color: var(--accent); }
+    .case-nav-id { font-size: 10px; font-family: var(--mono); }
+    .case-nav-title { font-size: 12px; line-height: 1.35; }
+    .case-nav-empty { font-size: 11px; color: var(--muted); padding: 0.5rem 1.25rem; }
+
+    /* ── Test case detail ── */
+    .case-detail-empty { color: var(--muted); font-size: 13px; padding: 1rem; }
+    .case-detail-header { margin-bottom: 1.5rem; }
+    .case-detail-id { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 6px; }
+    .case-detail-title { font-size: 20px; font-weight: 500; margin-bottom: 0.75rem; }
+    .case-detail-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .case-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--mono);
+    }
+    .case-badge.auto { background: rgba(63,185,80,.12); color: var(--pass); }
+    .case-badge.manual { background: rgba(227,179,65,.12); color: var(--warn); }
+    .case-badge.priority { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    .case-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(88,166,255,.12);
+      color: #58a6ff;
+      font-family: var(--mono);
+    }
+    .case-automation-link {
+      margin-top: 0.75rem;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .case-automation-file {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .case-automation-file:hover { opacity: 0.85; }
+    .case-automation-file code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--surface2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: inherit;
+    }
+    .case-automation-test { color: var(--text); }
+    .case-doc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .case-doc h1 { font-size: 18px; margin-bottom: 1rem; }
+    .case-doc h2 {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 1.25rem 0 0.5rem;
+    }
+    .case-doc h3 { font-size: 13px; margin: 1rem 0 0.5rem; }
+    .case-doc p { margin-bottom: 0.75rem; }
+    .case-doc p:last-child { margin-bottom: 0; }
+    .case-doc code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--surface2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -600,6 +716,13 @@
     <div class="logo">
       <div class="logo-title">QA Portfolio</div>
       <div class="logo-sub">Playwright · TypeScript</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Test cases</div>
+      <div class="case-nav-list" id="case-nav-list">
+        <div class="case-nav-empty">Loading test cases…</div>
+      </div>
     </div>
 
     <div class="nav-section">
@@ -643,6 +766,13 @@
     </div>
 
     <div class="content">
+
+      <!-- TEST CASES -->
+      <div class="section" id="sec-test-cases">
+        <div id="case-detail">
+          <div class="case-detail-empty">Select a test case from the sidebar.</div>
+        </div>
+      </div>
 
       <!-- RUN TESTS -->
       <div class="section active" id="sec-run">
@@ -792,9 +922,11 @@
     statusApi: "/api/status",
     resultsApi: "/api/results",
     reportsApi: "/api/reports",
+    testCasesApi: "/api/test-cases",
     pollIntervalMs: 4000,
   };
-  const titles = { run: "Run tests", reports: "Reports", stats: "Stats" };
+  const titles = { run: "Run tests", reports: "Reports", stats: "Stats", "test-cases": "Test cases" };
+  let testCaseIndex = [];
 
   function reportUrl(runId) {
     return `/api/report/${runId}/index.html`;
@@ -803,10 +935,147 @@
   function show(id, btn) {
     document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
     document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+    document.querySelectorAll(".case-nav-item").forEach((n) => n.classList.remove("active"));
     document.getElementById("sec-" + id).classList.add("active");
-    btn.classList.add("active");
+    if (btn) btn.classList.add("active");
     document.getElementById("page-title").textContent = titles[id];
     if (id !== "reports") hideReportsViewer();
+  }
+
+  function renderCaseNav(cases) {
+    const container = document.getElementById("case-nav-list");
+    const byFeature = {};
+
+    cases.forEach((item) => {
+      if (!byFeature[item.feature]) byFeature[item.feature] = [];
+      byFeature[item.feature].push(item);
+    });
+
+    container.innerHTML = "";
+
+    Object.keys(byFeature)
+      .sort()
+      .forEach((feature) => {
+        const featureLabel = document.createElement("div");
+        featureLabel.className = "case-nav-feature";
+        featureLabel.textContent = feature;
+        container.appendChild(featureLabel);
+
+        byFeature[feature].forEach((item) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "case-nav-item";
+          btn.dataset.id = item.id;
+          btn.innerHTML =
+            `<span class="case-nav-id">${item.id}</span>` +
+            `<span class="case-nav-title">${item.title}</span>`;
+          btn.onclick = () => openTestCase(item.id);
+          container.appendChild(btn);
+        });
+      });
+  }
+
+  function githubFileUrl(filePath) {
+    return `https://github.com/${CONFIG.githubRepo}/blob/main/${filePath}`;
+  }
+
+  function renderTestCaseDetail(detail) {
+    const el = document.getElementById("case-detail");
+    const tags = (detail.tags || [])
+      .map((tag) => `<span class="case-tag">${tag}</span>`)
+      .join("");
+    const isLinked = detail.automated && detail.automation;
+    const automatedBadge = isLinked
+      ? `<span class="case-badge auto">Automated · linked</span>`
+      : detail.automated
+        ? `<span class="case-badge auto">Automated</span>`
+        : `<span class="case-badge manual">Manual</span>`;
+
+    const automationLine = detail.automation
+      ? `<div class="case-automation-link">
+          <a class="case-automation-file" href="${githubFileUrl(detail.automation.path)}" target="_blank" rel="noopener noreferrer">
+            <i class="ti ti-brand-github"></i>
+            <code>${detail.automation.path}</code>
+          </a>
+          <span>·</span>
+          <span class="case-automation-test">${detail.automation.test}</span>
+        </div>`
+      : "";
+
+    el.innerHTML = `
+      <div class="case-detail-header">
+        <div class="case-detail-id">${detail.id}</div>
+        <h2 class="case-detail-title">${detail.title}</h2>
+        <div class="case-detail-meta">
+          ${automatedBadge}
+          <span class="case-badge priority">${detail.priority || "medium"}</span>
+          ${tags}
+        </div>
+        ${automationLine}
+      </div>
+      <article class="case-doc">${detail.bodyHtml || ""}</article>
+    `;
+  }
+
+  async function openTestCase(id) {
+    let detail = testCaseIndex.find((item) => item.id === id);
+
+    if (!detail?.bodyHtml) {
+      try {
+        const res = await fetch(`${CONFIG.testCasesApi}?id=${encodeURIComponent(id)}`);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.case) detail = data.case;
+      } catch {
+        /* keep sidebar selection without content */
+      }
+    }
+
+    if (!detail) return;
+
+    document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+    document.querySelectorAll(".case-nav-item").forEach((n) => n.classList.remove("active"));
+
+    document.getElementById("sec-test-cases").classList.add("active");
+    document.getElementById("page-title").textContent = detail.title;
+
+    const navBtn = document.querySelector(`.case-nav-item[data-id="${id}"]`);
+    if (navBtn) navBtn.classList.add("active");
+
+    hideReportsViewer();
+    renderTestCaseDetail(detail);
+  }
+
+  async function loadTestCases() {
+    const container = document.getElementById("case-nav-list");
+
+    async function tryLoad(url) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.cases || data.cases.length === 0) return null;
+      return data.cases;
+    }
+
+    try {
+      const fromStatic = await tryLoad("test-cases.json");
+      if (fromStatic) {
+        testCaseIndex = fromStatic;
+        renderCaseNav(fromStatic);
+        return;
+      }
+
+      const fromApi = await tryLoad(CONFIG.testCasesApi);
+      if (fromApi) {
+        testCaseIndex = fromApi;
+        renderCaseNav(fromApi);
+        return;
+      }
+
+      container.innerHTML = '<div class="case-nav-empty">No test cases yet</div>';
+    } catch {
+      container.innerHTML = '<div class="case-nav-empty">Could not load test cases</div>';
+    }
   }
 
   function clearRunValidationErrors() {
@@ -1386,6 +1655,7 @@
     }
   });
 
+  loadTestCases();
   loadSuites();
   loadReports();
 </script>
