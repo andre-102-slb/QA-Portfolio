@@ -616,7 +616,7 @@
       <!-- REPORTS -->
       <div class="section" id="sec-reports">
         <div class="section-header">
-          <span class="section-desc">Recent runs from GitHub Actions</span>
+          <span class="section-desc">Runs triggered from this dashboard</span>
         </div>
 
         <div class="reports-list" id="reports-list">
@@ -922,7 +922,7 @@
 
     if (!reports || reports.length === 0) {
       list.innerHTML =
-        '<div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">No workflow runs yet</div>';
+        '<div class="suite-group-count" style="padding:0.5rem;color:var(--muted)">No dashboard runs yet — use Run selected</div>';
       updateReportsBadge([]);
       return;
     }

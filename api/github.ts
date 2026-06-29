@@ -16,6 +16,7 @@ interface WorkflowRun {
   status: string;
   conclusion: string | null;
   display_title: string;
+  event: string;
 }
 
 interface ArtifactInfo {
@@ -51,9 +52,14 @@ async function githubGet<T>(apiPath: string, token: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function listWorkflowRuns(token: string, perPage = 5): Promise<WorkflowRun[]> {
+export async function listWorkflowRuns(
+  token: string,
+  perPage = 5,
+  event?: string
+): Promise<WorkflowRun[]> {
+  const eventQuery = event ? `&event=${encodeURIComponent(event)}` : "";
   const data = await githubGet<{ workflow_runs?: WorkflowRun[] }>(
-    `/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=${perPage}&branch=${GITHUB_REF}`,
+    `/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=${perPage}&branch=${GITHUB_REF}${eventQuery}`,
     token
   );
   return data.workflow_runs ?? [];
@@ -65,7 +71,7 @@ export async function findRunAfterDispatch(
 ): Promise<WorkflowRun | null> {
   for (let attempt = 0; attempt < 12; attempt += 1) {
     await sleep(1500);
-    const runs = await listWorkflowRuns(token, 8);
+    const runs = await listWorkflowRuns(token, 8, "workflow_dispatch");
     const run = runs.find(
       (item) => new Date(item.created_at).getTime() >= dispatchedAt.getTime() - 5000
     );
@@ -259,7 +265,7 @@ export async function downloadRunMeta(
 
 export async function fetchRecentReports(token: string, limit = 10): Promise<ReportSummary[]> {
   const data = await githubGet<{ workflow_runs?: WorkflowRun[] }>(
-    `/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=${limit}&branch=${GITHUB_REF}`,
+    `/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=${limit}&branch=${GITHUB_REF}&event=workflow_dispatch`,
     token
   );
 
