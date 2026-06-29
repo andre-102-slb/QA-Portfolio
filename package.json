@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "generate:suites": "node scripts/generate-suites.js",
-    "build": "npm run generate:suites"
+    "build": "npm run generate:suites && node scripts/copy-public.js"
   },
   "repository": {
     "type": "git",

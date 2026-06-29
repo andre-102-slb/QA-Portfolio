@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm run generate:suites",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "functions": {
     "api/suites.js": {
       "includeFiles": "frontend-tests/**"
