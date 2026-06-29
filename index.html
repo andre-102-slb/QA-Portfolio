@@ -620,6 +620,12 @@
     const container = document.getElementById("suite-tree");
     container.innerHTML = "";
 
+    if (!suites || suites.length === 0) {
+      container.innerHTML =
+        '<div class="suite-group-count" style="padding:0.5rem;color:var(--fail)">No test suites found</div>';
+      return;
+    }
+
     suites.forEach((group) => {
       const total = sumTests(group.children);
       const groupEl = document.createElement("div");
@@ -661,11 +667,18 @@
     container.innerHTML =
       '<div class="suite-group-count" style="padding:0.5rem">Loading suites…</div>';
 
+    async function tryLoad(url) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.suites || data.suites.length === 0) return null;
+      return data.suites;
+    }
+
     try {
-      const res = await fetch(CONFIG.suitesApi);
-      if (res.ok) {
-        const data = await res.json();
-        renderSuiteTree(data.suites);
+      const fromStatic = await tryLoad("suites.json");
+      if (fromStatic) {
+        renderSuiteTree(fromStatic);
         return;
       }
     } catch {
@@ -673,18 +686,17 @@
     }
 
     try {
-      const res = await fetch("suites.json");
-      if (res.ok) {
-        const data = await res.json();
-        renderSuiteTree(data.suites);
+      const fromApi = await tryLoad(CONFIG.suitesApi);
+      if (fromApi) {
+        renderSuiteTree(fromApi);
         return;
       }
     } catch {
-      /* show empty */
+      /* show error below */
     }
 
     container.innerHTML =
-      '<div class="suite-group-count" style="padding:0.5rem;color:var(--fail)">Could not load suites</div>';
+      '<div class="suite-group-count" style="padding:0.5rem;color:var(--fail)">Could not load suites — run npm run generate:suites and redeploy</div>';
   }
 
   function getSelectedPaths() {

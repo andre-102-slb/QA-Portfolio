@@ -9,7 +9,7 @@
         {
           "name": "login",
           "path": "frontend-tests/regression/login",
-          "tests": 1
+          "tests": 2
         }
       ]
     },
@@ -22,7 +22,7 @@
         {
           "name": "login",
           "path": "frontend-tests/smoke/login",
-          "tests": 1
+          "tests": 2
         }
       ]
     }

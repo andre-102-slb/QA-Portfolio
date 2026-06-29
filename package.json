@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "generate:suites": "node scripts/generate-suites.js"
+    "generate:suites": "node scripts/generate-suites.js",
+    "build": "npm run generate:suites"
   },
   "repository": {
     "type": "git",
