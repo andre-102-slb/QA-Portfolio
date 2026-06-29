@@ -261,6 +261,27 @@
     .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-run i { font-size: 15px; }
 
+    .run-name-wrap { margin-bottom: 0.75rem; }
+    .run-name-label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .run-name-input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: var(--sans);
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+    }
+    .run-name-input:focus { border-color: var(--accent-bd); }
+    .run-name-input::placeholder { color: var(--muted); }
+
     .actions-link {
       display: inline-flex;
       margin-top: 0.75rem;
@@ -325,13 +346,19 @@
       font-size: 12px;
       color: var(--text);
       font-family: var(--mono);
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
       padding: 0.5rem 0.75rem;
       background: var(--surface2);
       border-radius: var(--radius);
       border: 1px solid var(--border);
     }
     .run-live-suites span { color: var(--muted); }
+    .run-live-name {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+    }
     .report-summary {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -539,6 +566,17 @@
             </button>
           </div>
 
+          <div class="run-name-wrap">
+            <label class="run-name-label" for="run-name">Run name</label>
+            <input
+              class="run-name-input"
+              id="run-name"
+              type="text"
+              placeholder="e.g. Smoke before release"
+              maxlength="120"
+            />
+          </div>
+
           <button class="btn-run" id="run-btn" onclick="runTests()">
             <i class="ti ti-player-play"></i> Run selected
           </button>
@@ -554,6 +592,7 @@
 
           <div class="run-live-summary" id="run-live-summary">
             <div class="run-live-title">Live results</div>
+            <div class="run-live-name" id="live-run-name"></div>
             <div class="run-live-suites"><span>Suites · </span><span id="live-suites">—</span></div>
             <div class="report-summary">
               <div class="report-metric">
@@ -788,8 +827,16 @@
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
-  function showRunSummary(suiteLabel) {
+  function showRunSummary(suiteLabel, runName) {
     document.getElementById("run-live-summary").classList.add("show");
+    const nameEl = document.getElementById("live-run-name");
+    if (runName) {
+      nameEl.textContent = runName;
+      nameEl.style.display = "";
+    } else {
+      nameEl.textContent = "";
+      nameEl.style.display = "none";
+    }
     document.getElementById("live-suites").textContent = suiteLabel || "—";
     document.getElementById("live-total").textContent = "—";
     document.getElementById("live-passed").textContent = "—";
@@ -799,6 +846,8 @@
 
   function clearRunSummary() {
     document.getElementById("run-live-summary").classList.remove("show");
+    document.getElementById("live-run-name").textContent = "";
+    document.getElementById("live-run-name").style.display = "none";
     document.getElementById("live-suites").textContent = "—";
     document.getElementById("live-total").textContent = "—";
     document.getElementById("live-passed").textContent = "—";
@@ -806,8 +855,16 @@
     document.getElementById("live-skipped").textContent = "—";
   }
 
-  function renderRunSummary(suiteLabel, stats) {
+  function renderRunSummary(suiteLabel, stats, runName) {
     document.getElementById("run-live-summary").classList.add("show");
+    const nameEl = document.getElementById("live-run-name");
+    if (runName) {
+      nameEl.textContent = runName;
+      nameEl.style.display = "";
+    } else {
+      nameEl.textContent = "";
+      nameEl.style.display = "none";
+    }
     document.getElementById("live-suites").textContent = suiteLabel || "—";
     document.getElementById("live-total").textContent = stats.total;
     document.getElementById("live-passed").textContent = stats.passed;
@@ -940,12 +997,12 @@
     return null;
   }
 
-  async function pollRunStatus(runId, { fill, label }, suiteLabel) {
+  async function pollRunStatus(runId, { fill, label }, suiteLabel, runName) {
     const loggedSteps = new Set();
     let lastStatus = "";
     const maxAttempts = 90;
 
-    showRunSummary(suiteLabel);
+    showRunSummary(suiteLabel, runName);
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const res = await fetch(`${CONFIG.statusApi}?run_id=${runId}`);
@@ -956,7 +1013,8 @@
         return;
       }
 
-      const statusLine = `${data.status} — ${data.display_title || "Playwright Tests"}`;
+      const statusTitle = runName || data.display_title || "Playwright Tests";
+      const statusLine = `${data.status} — ${statusTitle}`;
       if (statusLine !== lastStatus) {
         appendLog("info", "  " + statusLine);
         lastStatus = statusLine;
@@ -983,7 +1041,7 @@
 
         const results = await fetchRunResults(runId);
         if (results) {
-          renderRunSummary(suiteLabel, results.stats);
+          renderRunSummary(suiteLabel, results.stats, runName);
           await loadReports();
           appendLog(
             results.stats.failed > 0 ? "fail" : "pass",
@@ -1022,6 +1080,7 @@
     const retries = getRetries();
     const command = buildRunCommand();
     const suiteLabel = paths.map((p) => p.split("/").slice(-2).join("/")).join(", ");
+    const runName = document.getElementById("run-name").value.trim();
 
     btn.disabled = true;
     btn.innerHTML = "<i class=\"ti ti-loader\"></i> Running…";
@@ -1033,13 +1092,14 @@
     label.textContent = "Dispatching workflow…";
 
     appendLog("info", "▶  Starting test run");
+    if (runName) appendLog("info", "  Run · " + runName);
     appendLog("muted", "$ " + command);
 
     try {
       const res = await fetch(CONFIG.triggerApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test_paths: testPaths, retries }),
+        body: JSON.stringify({ test_paths: testPaths, retries, run_name: runName }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -1054,7 +1114,7 @@
         appendLog("info", "  Polling every " + CONFIG.pollIntervalMs / 1000 + "s…");
         fill.style.width = "15%";
         label.textContent = "Waiting for run to start…";
-        await pollRunStatus(data.run_id, { fill, label }, suiteLabel);
+        await pollRunStatus(data.run_id, { fill, label }, suiteLabel, runName);
       } else {
         fill.style.width = "100%";
         label.textContent = "Started — waiting for run ID…";

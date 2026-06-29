@@ -34,6 +34,7 @@ export interface ParsedResults {
 export interface TriggerBody {
   test_paths?: string;
   retries?: number | string;
+  run_name?: string;
 }
 
 export interface ReportSummary {

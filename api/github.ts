@@ -233,6 +233,30 @@ export async function downloadRunResults(
   return parsePlaywrightResults(JSON.parse(entry.getData().toString("utf8")));
 }
 
+export async function downloadRunMeta(
+  token: string,
+  runId: string
+): Promise<{ name: string } | null> {
+  const zip = await getCachedReportZip(token, runId);
+  if (!zip) return null;
+
+  const entry =
+    findZipEntry(zip, "run-meta.json") ??
+    zip.getEntries().find((item) => item.entryName.endsWith("/run-meta.json")) ??
+    null;
+
+  if (!entry) return null;
+
+  try {
+    const parsed = JSON.parse(entry.getData().toString("utf8")) as { name?: string };
+    return typeof parsed.name === "string" && parsed.name.trim()
+      ? { name: parsed.name.trim() }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchRecentReports(token: string, limit = 10): Promise<ReportSummary[]> {
   const data = await githubGet<{ workflow_runs?: WorkflowRun[] }>(
     `/repos/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=${limit}&branch=${GITHUB_REF}`,
@@ -244,10 +268,15 @@ export async function fetchRecentReports(token: string, limit = 10): Promise<Rep
   return Promise.all(
     runs.map(async (run) => {
       let hasReport = false;
+      let title = run.display_title || "Playwright Tests";
 
       if (run.status === "completed") {
         try {
           hasReport = await hasPlaywrightReport(token, String(run.id));
+          if (hasReport) {
+            const meta = await downloadRunMeta(token, String(run.id));
+            if (meta?.name) title = meta.name;
+          }
         } catch {
           hasReport = false;
         }
@@ -255,7 +284,7 @@ export async function fetchRecentReports(token: string, limit = 10): Promise<Rep
 
       return {
         run_id: run.id,
-        title: run.display_title || "Playwright Tests",
+        title,
         created_at: run.created_at,
         status: run.status,
         conclusion: run.conclusion,
