@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Portfolio — Playwright Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.19.0/iconfont/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #00d4aa;
+      --accent-bg: rgba(0, 212, 170, 0.08);
+      --accent-bd: rgba(0, 212, 170, 0.3);
+      --pass:      #3fb950;
+      --fail:      #f85149;
+      --warn:      #e3b341;
+      --info:      #58a6ff;
+      --radius:    8px;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; flex: 1; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .logo {
+      padding: 0 1.25rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+    }
+    .logo-title { font-size: 14px; font-weight: 500; color: var(--accent); letter-spacing: -0.01em; }
+    .logo-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+
+    .nav-section { margin-bottom: 0.25rem; }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      padding: 0.5rem 1.25rem 0.25rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 1.25rem;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      transition: color 0.15s, background 0.15s;
+      border-radius: 0;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent-bg); color: var(--accent); border-left: 2px solid var(--accent); }
+    .nav-item i { font-size: 16px; }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--fail);
+      font-family: var(--mono);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .status-row { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pass); }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    .topbar {
+      padding: 0.875rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .page-title { font-size: 14px; font-weight: 500; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .btn-ghost {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--sans);
+    }
+    .btn-ghost:hover { border-color: var(--accent-bd); color: var(--accent); }
+
+    .content { padding: 1.5rem; flex: 1; }
+
+    /* ── Sections ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Suite cards ── */
+    .suite-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .suite-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.875rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .suite-card:hover { border-color: #58a6ff44; }
+    .suite-card.selected { border-color: var(--accent-bd); background: var(--accent-bg); }
+    .suite-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+    .suite-count { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+    .suite-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-top: 6px;
+      font-family: var(--mono);
+    }
+    .tag-e2e   { background: rgba(88,166,255,.12); color: #58a6ff; }
+    .tag-api   { background: rgba(188,140,255,.12); color: #bc8cff; }
+    .tag-smoke { background: rgba(63,185,80,.12);  color: var(--pass); }
+
+    /* ── Run panel ── */
+    .run-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+    .run-panel-label { font-size: 11px; color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .options-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
+    .opt-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--sans);
+    }
+    .opt-toggle.on { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-bd); }
+    .opt-toggle i { font-size: 14px; }
+
+    .btn-run {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 18px;
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      font-family: var(--sans);
+    }
+    .btn-run:hover   { opacity: 0.88; }
+    .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-run i { font-size: 15px; }
+
+    .actions-link {
+      display: inline-flex;
+      margin-top: 0.75rem;
+      font-size: 12px;
+    }
+
+    .progress-wrap { margin-top: 1rem; display: none; }
+    .progress-track {
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .progress-label { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 6px; }
+
+    /* ── Terminal ── */
+    .terminal {
+      margin-top: 1rem;
+      background: #010409;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.875rem;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+    .terminal.show { display: block; }
+    .t-info  { color: #58a6ff; }
+    .t-pass  { color: var(--pass); }
+    .t-fail  { color: var(--fail); }
+    .t-warn  { color: var(--warn); }
+    .t-muted { color: var(--muted); }
+
+    /* ── Reports ── */
+    .reports-list { display: flex; flex-direction: column; gap: 8px; }
+    .report-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.875rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s;
+    }
+    .report-row:hover { border-color: #58a6ff44; }
+    .report-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .icon-pass { background: rgba(63,185,80,.15); color: var(--pass); }
+    .icon-fail { background: rgba(248,81,73,.15);  color: var(--fail); }
+    .report-info { flex: 1; min-width: 0; }
+    .report-name { font-size: 13px; font-weight: 500; }
+    .report-date { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+    .report-stats { display: flex; gap: 10px; font-size: 12px; font-family: var(--mono); flex-shrink: 0; }
+    .s-pass { color: var(--pass); }
+    .s-fail { color: var(--fail); }
+    .btn-view {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      font-family: var(--sans);
+    }
+    .btn-view:hover { border-color: var(--accent-bd); color: var(--accent); }
+
+    /* ── Metrics ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .metric-value { font-size: 24px; font-weight: 500; font-family: var(--mono); }
+    .metric-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .green { color: var(--pass); }
+    .red   { color: var(--fail); }
+
+    /* ── Environment ── */
+    .env-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .env-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .env-title { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .env-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); }
+    .env-row:last-child { border-bottom: none; }
+    .env-key { font-size: 12px; color: var(--muted); }
+    .env-val { font-size: 12px; color: var(--text); font-family: var(--mono); }
+
+    /* ── Failures box ── */
+    .failures-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .failures-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    .fail-line { font-size: 12px; font-family: var(--mono); color: var(--muted); padding: 3px 0; }
+    .fail-line span { color: var(--fail); margin-right: 6px; }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .section-desc { font-size: 12px; color: var(--muted); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-title">QA Portfolio</div>
+      <div class="logo-sub">Playwright · TypeScript</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Testing</div>
+      <button class="nav-item active" data-section="run" onclick="show('run', this)">
+        <i class="ti ti-player-play"></i> Run tests
+      </button>
+      <button class="nav-item" data-section="reports" onclick="show('reports', this)">
+        <i class="ti ti-file-description"></i> Reports
+        <span class="nav-badge">3</span>
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Info</div>
+      <button class="nav-item" data-section="env" onclick="show('env', this)">
+        <i class="ti ti-settings"></i> Environment
+      </button>
+      <button class="nav-item" data-section="stats" onclick="show('stats', this)">
+        <i class="ti ti-chart-bar"></i> Stats
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="status-row">
+        <div class="dot"></div>
+        Docker ready
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <span class="page-title" id="page-title">Run tests</span>
+      <div class="topbar-right">
+        <a class="btn-ghost" href="https://github.com/andre-102-slb/QA-Portfolio" target="_blank">
+          <i class="ti ti-brand-github"></i> GitHub
+        </a>
+        <a class="btn-ghost" id="report-link" href="playwright-report/index.html" target="_blank">
+          <i class="ti ti-external-link"></i> Latest report
+        </a>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- RUN TESTS -->
+      <div class="section active" id="sec-run">
+        <div class="section-header">
+          <span class="section-desc">Select suites and run</span>
+        </div>
+
+        <div class="suite-grid">
+          <div class="suite-card selected" data-path="frontend-tests/smoke" onclick="toggleSuite(this)">
+            <div class="suite-name">Smoke tests</div>
+            <div class="suite-count">1 test</div>
+            <span class="suite-tag tag-smoke">smoke</span>
+          </div>
+          <div class="suite-card selected" data-path="frontend-tests/regression" onclick="toggleSuite(this)">
+            <div class="suite-name">Regression</div>
+            <div class="suite-count">1 test</div>
+            <span class="suite-tag tag-e2e">e2e</span>
+          </div>
+        </div>
+
+        <div class="run-panel">
+          <div class="run-panel-label">Options</div>
+          <div class="options-row">
+            <button class="opt-toggle on" onclick="this.classList.toggle('on')">
+              <i class="ti ti-eye-off"></i> Headless
+            </button>
+            <button class="opt-toggle on" onclick="this.classList.toggle('on')">
+              <i class="ti ti-file-description"></i> HTML report
+            </button>
+            <button class="opt-toggle" onclick="this.classList.toggle('on')">
+              <i class="ti ti-refresh"></i> Retry on fail
+            </button>
+            <button class="opt-toggle" onclick="this.classList.toggle('on')">
+              <i class="ti ti-video"></i> Video
+            </button>
+          </div>
+
+          <button class="btn-run" id="run-btn" onclick="runTests()">
+            <i class="ti ti-player-play"></i> Run selected
+          </button>
+
+          <a
+            class="btn-ghost actions-link"
+            href="https://github.com/andre-102-slb/QA-Portfolio/actions/workflows/playwright.yml"
+            target="_blank"
+            rel="noopener"
+          >
+            <i class="ti ti-brand-github"></i> Open GitHub Actions
+          </a>
+
+          <div class="progress-wrap" id="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-label" id="progress-label">Starting...</div>
+          </div>
+
+          <div class="terminal" id="terminal"></div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="section" id="sec-reports">
+        <div class="section-header">
+          <span class="section-desc">Previous runs — click to open HTML report</span>
+        </div>
+
+        <div class="reports-list">
+          <div class="report-row">
+            <div class="report-icon icon-pass"><i class="ti ti-check"></i></div>
+            <div class="report-info">
+              <div class="report-name">Smoke + Regression</div>
+              <div class="report-date">2025-06-29 · 14:32 · 12s</div>
+            </div>
+            <div class="report-stats">
+              <span class="s-pass">6 passed</span>
+              <span class="s-fail">0 failed</span>
+            </div>
+            <a class="btn-view" href="playwright-report/index.html" target="_blank">
+              <i class="ti ti-external-link"></i> View
+            </a>
+          </div>
+
+          <div class="report-row">
+            <div class="report-icon icon-pass"><i class="ti ti-check"></i></div>
+            <div class="report-info">
+              <div class="report-name">Smoke tests only</div>
+              <div class="report-date">2025-06-29 · 09:15 · 6s</div>
+            </div>
+            <div class="report-stats">
+              <span class="s-pass">3 passed</span>
+              <span class="s-fail">0 failed</span>
+            </div>
+            <a class="btn-view" href="playwright-report/index.html" target="_blank">
+              <i class="ti ti-external-link"></i> View
+            </a>
+          </div>
+
+          <div class="report-row">
+            <div class="report-icon icon-pass"><i class="ti ti-check"></i></div>
+            <div class="report-info">
+              <div class="report-name">Regression only</div>
+              <div class="report-date">2025-06-28 · 18:50 · 5s</div>
+            </div>
+            <div class="report-stats">
+              <span class="s-pass">3 passed</span>
+              <span class="s-fail">0 failed</span>
+            </div>
+            <a class="btn-view" href="playwright-report/index.html" target="_blank">
+              <i class="ti ti-external-link"></i> View
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENVIRONMENT -->
+      <div class="section" id="sec-env">
+        <div class="section-header">
+          <span class="section-desc">Runtime environment</span>
+        </div>
+
+        <div class="env-grid">
+          <div class="env-card">
+            <div class="env-title">Docker</div>
+            <div class="env-row"><span class="env-key">Image</span><span class="env-val">playwright:v1.45</span></div>
+            <div class="env-row"><span class="env-key">Status</span><span class="env-val" style="color:var(--pass)">running</span></div>
+            <div class="env-row"><span class="env-key">OS</span><span class="env-val">Ubuntu 22.04</span></div>
+          </div>
+          <div class="env-card">
+            <div class="env-title">Browsers</div>
+            <div class="env-row"><span class="env-key">Chromium</span><span class="env-val">124.0.x</span></div>
+            <div class="env-row"><span class="env-key">Firefox</span><span class="env-val">125.0.x</span></div>
+            <div class="env-row"><span class="env-key">WebKit</span><span class="env-val">17.4</span></div>
+          </div>
+          <div class="env-card">
+            <div class="env-title">Stack</div>
+            <div class="env-row"><span class="env-key">Node</span><span class="env-val">20.14.0</span></div>
+            <div class="env-row"><span class="env-key">Playwright</span><span class="env-val">1.45.0</span></div>
+            <div class="env-row"><span class="env-key">TypeScript</span><span class="env-val">5.4.5</span></div>
+          </div>
+          <div class="env-card">
+            <div class="env-title">Config</div>
+            <div class="env-row"><span class="env-key">Base URL</span><span class="env-val">saucedemo.com</span></div>
+            <div class="env-row"><span class="env-key">Timeout</span><span class="env-val">30 000ms</span></div>
+            <div class="env-row"><span class="env-key">Workers</span><span class="env-val">4</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="section" id="sec-stats">
+        <div class="section-header">
+          <span class="section-desc">Last 7 days</span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric">
+            <div class="metric-label">Total runs</div>
+            <div class="metric-value">14</div>
+            <div class="metric-sub">this week</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Pass rate</div>
+            <div class="metric-value green">91%</div>
+            <div class="metric-sub">↑ 4% vs last week</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tests run</div>
+            <div class="metric-value">412</div>
+            <div class="metric-sub">total executions</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Avg duration</div>
+            <div class="metric-value">2m38s</div>
+            <div class="metric-sub">per full suite</div>
+          </div>
+        </div>
+
+        <div class="failures-box">
+          <div class="failures-title">Most recent failures</div>
+          <div class="fail-line"><span>—</span>No failures in the last run</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const CONFIG = {
+    githubRepo: "andre-102-slb/QA-Portfolio",
+    workflowFile: "playwright.yml",
+    triggerApi: "/api/trigger",
+  };
+
+  const ACTIONS_URL = `https://github.com/${CONFIG.githubRepo}/actions/workflows/${CONFIG.workflowFile}`;
+  const titles = { run: "Run tests", reports: "Reports", env: "Environment", stats: "Stats" };
+
+  function show(id, btn) {
+    document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+    document.getElementById("sec-" + id).classList.add("active");
+    btn.classList.add("active");
+    document.getElementById("page-title").textContent = titles[id];
+  }
+
+  function toggleSuite(el) {
+    el.classList.toggle("selected");
+  }
+
+  function getSelectedPaths() {
+    return [...document.querySelectorAll(".suite-card.selected")].map(
+      (el) => el.dataset.path
+    );
+  }
+
+  function buildRunCommand() {
+    const paths = getSelectedPaths();
+    if (paths.length === 0) return "npx playwright test";
+    return `npx playwright test ${paths.join(" ")}`;
+  }
+
+  function appendLog(cls, msg) {
+    const term = document.getElementById("terminal");
+    const line = document.createElement("div");
+    line.className = "t-" + cls;
+    line.textContent = msg;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+    return line;
+  }
+
+  async function runTests() {
+    const paths = getSelectedPaths();
+    if (paths.length === 0) {
+      alert("Select at least one suite to run.");
+      return;
+    }
+
+    const btn = document.getElementById("run-btn");
+    const term = document.getElementById("terminal");
+    const wrap = document.getElementById("progress-wrap");
+    const fill = document.getElementById("progress-fill");
+    const label = document.getElementById("progress-label");
+    const testPaths = paths.join(" ");
+    const command = buildRunCommand();
+
+    btn.disabled = true;
+    btn.innerHTML = "<i class=\"ti ti-loader\"></i> Triggering…";
+    term.innerHTML = "";
+    term.classList.add("show");
+    wrap.style.display = "block";
+    fill.style.width = "10%";
+    label.textContent = "Dispatching workflow…";
+
+    appendLog("info", "▶  Triggering GitHub Actions workflow");
+    appendLog("muted", "$ " + command);
+
+    try {
+      const res = await fetch(CONFIG.triggerApi, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test_paths: testPaths }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      fill.style.width = "100%";
+      label.textContent = "Workflow dispatched — running on GitHub";
+      appendLog("pass", "  ✓  Workflow dispatched successfully");
+      appendLog("info", "  Suites: " + testPaths);
+      appendLog("info", "  Track run: " + ACTIONS_URL);
+      appendLog("muted", "  Report artifact available after the run completes");
+
+      setTimeout(() => window.open(ACTIONS_URL, "_blank"), 600);
+    } catch (err) {
+      fill.style.width = "100%";
+      label.textContent = "API trigger failed — use GitHub Actions";
+      appendLog("fail", "  ✗  " + err.message);
+      appendLog("warn", "  Open GitHub Actions and click \"Run workflow\" manually:");
+      appendLog("info", "  " + ACTIONS_URL);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = "<i class=\"ti ti-player-play\"></i> Run selected";
+  }
+</script>
+</body>
+</html>
