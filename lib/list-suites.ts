@@ -2,43 +2,35 @@ import fs from "fs";
 import path from "path";
 import type { SuiteGroup } from "./types";
 
-const TEST_ROOT = "frontend-tests";
-const TAG_BY_GROUP: Record<string, string> = { smoke: "smoke", regression: "e2e" };
-const NAME_BY_GROUP: Record<string, string> = {
-  smoke: "Smoke Tests",
-  regression: "Regression Tests",
+const TESTS_DIR = path.join(process.cwd(), "frontend-tests");
+
+const GROUP_LABELS: Record<string, { name: string; tag: string }> = {
+  smoke: { name: "Smoke Tests", tag: "smoke" },
+  regression: { name: "Regression Tests", tag: "e2e" },
 };
 
-function getProjectRoot(): string {
-  const fromCwd = process.cwd();
-  if (fs.existsSync(path.join(fromCwd, TEST_ROOT))) return fromCwd;
-  return path.join(__dirname, "..");
+/** Builds the suite tree from the `frontend-tests/<group>/<suite>` folder layout. */
+export function listSuites(): SuiteGroup[] {
+  if (!fs.existsSync(TESTS_DIR)) return [];
+
+  return subdirs(TESTS_DIR).map((groupId) => {
+    const label = GROUP_LABELS[groupId] ?? { name: `${groupId} Tests`, tag: "e2e" };
+    return {
+      id: groupId,
+      name: label.name,
+      tag: label.tag,
+      path: `frontend-tests/${groupId}`,
+      children: subdirs(path.join(TESTS_DIR, groupId)).map((name) => ({
+        name,
+        path: `frontend-tests/${groupId}/${name}`,
+      })),
+    };
+  });
 }
 
-export function listSuites(): SuiteGroup[] {
-  const root = path.join(getProjectRoot(), TEST_ROOT);
-  if (!fs.existsSync(root)) return [];
-
+function subdirs(dir: string): string[] {
   return fs
-    .readdirSync(root, { withFileTypes: true })
+    .readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .map((groupId) => {
-      const groupPath = path.join(root, groupId);
-      const children = fs
-        .readdirSync(groupPath, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => ({
-          name: entry.name,
-          path: `${TEST_ROOT}/${groupId}/${entry.name}`,
-        }));
-
-      return {
-        id: groupId,
-        name: NAME_BY_GROUP[groupId] ?? `${groupId} Tests`,
-        path: `${TEST_ROOT}/${groupId}`,
-        tag: TAG_BY_GROUP[groupId] ?? "e2e",
-        children,
-      };
-    });
+    .map((entry) => entry.name);
 }

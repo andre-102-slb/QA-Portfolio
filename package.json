@@ -1,9 +1,9 @@
 {
   "name": "qa-portfolio",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Playwright QA portfolio with a dashboard to trigger runs, browse reports and test cases.",
   "scripts": {
+    "test": "playwright test",
     "build": "tsx scripts/build.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -11,28 +11,19 @@
     "type": "git",
     "url": "git+https://github.com/andre-102-slb/QA-Portfolio.git"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/andre-102-slb/QA-Portfolio/issues"
-  },
-  "homepage": "https://github.com/andre-102-slb/QA-Portfolio#readme",
   "dependencies": {
     "adm-zip": "^0.5.18",
+    "js-yaml": "^5.2.0",
     "tsx": "^4.19.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@types/adm-zip": "^0.5.8",
-    "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.0.1",
-    "@types/supertest": "^7.2.0",
     "@vercel/node": "^5.1.14",
-    "jest": "^30.4.2",
-    "supertest": "^7.2.2",
-    "ts-jest": "^29.4.11",
     "typescript": "^5.8.3"
   }
 }

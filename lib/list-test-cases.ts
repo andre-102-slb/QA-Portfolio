@@ -1,174 +1,159 @@
 import fs from "fs";
 import path from "path";
+import yaml from "js-yaml";
 
-const TEST_CASES_ROOT = "test-cases";
+const TEST_CASES_DIR = path.join(process.cwd(), "test-cases");
 
 export interface TestCaseAutomation {
   path: string;
   test: string;
 }
 
-export interface TestCaseSummary {
+export interface TestCaseStep {
+  action: string;
+  data: string | null;
+  expected: string[];
+}
+
+export interface TestCase {
   id: string;
   title: string;
   feature: string;
-  suite: string;
-  group: string;
   priority: string;
   tags: string[];
   automated: boolean;
   automation: TestCaseAutomation | null;
-  file: string;
-}
-
-export interface TestCaseDetail extends TestCaseSummary {
-  body: string;
+  precondition: string | null;
+  steps: TestCaseStep[];
   bodyHtml: string;
 }
 
-function getProjectRoot(): string {
-  const fromCwd = process.cwd();
-  if (fs.existsSync(path.join(fromCwd, TEST_CASES_ROOT))) return fromCwd;
-  return path.join(__dirname, "..");
+type Frontmatter = Record<string, unknown>;
+
+/** Reads every `test-cases/<feature>/*.md` file and turns it into a TestCase. */
+export function listTestCases(): TestCase[] {
+  if (!fs.existsSync(TEST_CASES_DIR)) return [];
+
+  return subdirs(TEST_CASES_DIR)
+    .flatMap((feature) => markdownFiles(path.join(TEST_CASES_DIR, feature)).map((file) => parseTestCase(file, feature)))
+    .filter((testCase): testCase is TestCase => testCase !== null)
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function splitFrontmatter(content: string): { yaml: string; body: string } | null {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-  if (!match) return null;
-  return { yaml: match[1], body: match[2].trim() };
-}
+function parseTestCase(filePath: string, feature: string): TestCase | null {
+  const { frontmatter, body } = splitFrontmatter(fs.readFileSync(filePath, "utf8"));
+  const meta = parseYaml(frontmatter);
 
-function parseSimpleFields(yaml: string): Record<string, string> {
-  const fields: Record<string, string> = {};
-  for (const line of yaml.split("\n")) {
-    if (line.startsWith(" ") || line.startsWith("\t")) continue;
-    const match = line.match(/^([a-zA-Z]+):\s*(.*)$/);
-    if (match) fields[match[1]] = match[2].trim();
-  }
-  return fields;
-}
-
-function parseTags(yaml: string): string[] {
-  const tags: string[] = [];
-  let inTags = false;
-
-  for (const line of yaml.split("\n")) {
-    if (/^tags:\s*$/.test(line)) {
-      inTags = true;
-      continue;
-    }
-    if (inTags) {
-      const item = line.match(/^\s*-\s*(.+)$/);
-      if (item) tags.push(item[1].trim());
-      else if (line.trim() && !line.startsWith(" ")) inTags = false;
-    }
-  }
-
-  return tags;
-}
-
-function parseAutomation(yaml: string): TestCaseAutomation | null {
-  const pathMatch = yaml.match(/^\s+path:\s*(.+)$/m);
-  const testMatch = yaml.match(/^\s+test:\s*(.+)$/m);
-  if (!pathMatch || !testMatch) return null;
-  return { path: pathMatch[1].trim(), test: testMatch[1].trim() };
-}
-
-export function markdownToHtml(markdown: string): string {
-  const blocks = markdown.split(/\n\n+/);
-
-  return blocks
-    .map((block) => {
-      const trimmed = block.trim();
-      if (!trimmed) return "";
-
-      if (/^#{1,3}\s/.test(trimmed)) {
-        return trimmed
-          .split("\n")
-          .map((line) => {
-            if (line.startsWith("### ")) return `<h3>${inlineMarkdown(line.slice(4))}</h3>`;
-            if (line.startsWith("## ")) return `<h2>${inlineMarkdown(line.slice(3))}</h2>`;
-            if (line.startsWith("# ")) return `<h1>${inlineMarkdown(line.slice(2))}</h1>`;
-            return inlineMarkdown(line);
-          })
-          .join("\n");
-      }
-
-      return `<p>${inlineMarkdown(trimmed.replace(/\n/g, " "))}</p>`;
-    })
-    .filter(Boolean)
-    .join("\n");
-}
-
-function inlineMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/_(.+?)_/g, "<em>$1</em>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>");
-}
-
-function parseTestCaseFile(filePath: string, feature: string): TestCaseDetail | null {
-  const basename = path.basename(filePath);
-  if (basename === "TEMPLATE.md" || basename.startsWith("_")) return null;
-
-  const raw = fs.readFileSync(filePath, "utf8");
-  const parts = splitFrontmatter(raw);
-  if (!parts) return null;
-
-  const fields = parseSimpleFields(parts.yaml);
-  const id = fields.id?.trim();
-  const title = fields.title?.trim();
+  const id = str(meta.id);
+  const title = str(meta.title);
   if (!id || !title) return null;
 
-  const root = getProjectRoot();
-  const relativeFile = path.relative(root, filePath).split(path.sep).join("/");
-  const automation = parseAutomation(parts.yaml);
-  const automated = fields.automated === "true" && automation !== null;
+  const automation = parseAutomation(meta.automation);
 
   return {
     id,
     title,
     feature,
-    suite: fields.suite?.trim() || feature,
-    group: fields.group?.trim() || "",
-    priority: fields.priority?.trim() || "medium",
-    tags: parseTags(parts.yaml),
-    automated,
+    priority: str(meta.priority) ?? "medium",
+    tags: strList(meta.tags),
+    automated: meta.automated === true && automation !== null,
     automation,
-    file: relativeFile,
-    body: parts.body,
-    bodyHtml: markdownToHtml(parts.body),
+    precondition: str(meta.precondition),
+    steps: parseSteps(meta.steps),
+    bodyHtml: markdownToHtml(body),
   };
 }
 
-function collectTestCaseFiles(): TestCaseDetail[] {
-  const root = path.join(getProjectRoot(), TEST_CASES_ROOT);
-  if (!fs.existsSync(root)) return [];
+// ── Filesystem helpers ──────────────────────────────────────────────
 
-  const cases: TestCaseDetail[] = [];
+function subdirs(dir: string): string[] {
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+}
 
-  for (const featureEntry of fs.readdirSync(root, { withFileTypes: true })) {
-    if (!featureEntry.isDirectory()) continue;
+function markdownFiles(dir: string): string[] {
+  return fs
+    .readdirSync(dir)
+    .filter((name) => name.endsWith(".md") && name !== "TEMPLATE.md")
+    .map((name) => path.join(dir, name));
+}
 
-    const featureDir = path.join(root, featureEntry.name);
-    for (const fileEntry of fs.readdirSync(featureDir, { withFileTypes: true })) {
-      if (!fileEntry.isFile() || !fileEntry.name.endsWith(".md")) continue;
-      const parsed = parseTestCaseFile(path.join(featureDir, fileEntry.name), featureEntry.name);
-      if (parsed) cases.push(parsed);
-    }
+// ── Frontmatter parsing ─────────────────────────────────────────────
+
+function splitFrontmatter(raw: string): { frontmatter: string; body: string } {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  return match ? { frontmatter: match[1], body: match[2].trim() } : { frontmatter: "", body: raw.trim() };
+}
+
+function parseYaml(text: string): Frontmatter {
+  try {
+    const data = yaml.load(text);
+    return data && typeof data === "object" ? (data as Frontmatter) : {};
+  } catch {
+    return {};
   }
-
-  return cases.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function listTestCases(): TestCaseSummary[] {
-  return collectTestCaseFiles().map(({ body: _body, bodyHtml: _bodyHtml, ...summary }) => summary);
+function parseAutomation(value: unknown): TestCaseAutomation | null {
+  const automation = value as { path?: unknown; test?: unknown } | null;
+  const automationPath = str(automation?.path);
+  const test = str(automation?.test);
+  return automationPath && test ? { path: automationPath, test } : null;
 }
 
-export function getTestCaseById(id: string): TestCaseDetail | null {
-  return collectTestCaseFiles().find((item) => item.id === id) ?? null;
+function parseSteps(value: unknown): TestCaseStep[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(toStep).filter((step): step is TestCaseStep => step !== null);
 }
 
-export function listTestCasesWithContent(): TestCaseDetail[] {
-  return collectTestCaseFiles();
+function toStep(raw: unknown): TestCaseStep | null {
+  if (typeof raw === "string") {
+    return raw.trim() ? { action: raw.trim(), data: null, expected: [] } : null;
+  }
+  const step = raw as { action?: unknown; data?: unknown; expected?: unknown };
+  const action = str(step?.action);
+  return action ? { action, data: str(step?.data), expected: strList(step?.expected) } : null;
+}
+
+// ── Value coercion ──────────────────────────────────────────────────
+
+function str(value: unknown): string | null {
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return null;
+}
+
+function strList(value: unknown): string[] {
+  const items = Array.isArray(value) ? value : [value];
+  return items.map(str).filter((item): item is string => item !== null);
+}
+
+// ── Minimal Markdown → HTML (headings, paragraphs, inline marks) ─────
+
+function markdownToHtml(markdown: string): string {
+  if (!markdown) return "";
+  return markdown
+    .split(/\n\n+/)
+    .map((block) => blockToHtml(block.trim()))
+    .filter(Boolean)
+    .join("\n");
+}
+
+function blockToHtml(block: string): string {
+  if (!block) return "";
+  const heading = block.match(/^(#{1,3})\s+(.*)$/);
+  if (heading) {
+    const level = heading[1].length;
+    return `<h${level}>${inline(heading[2])}</h${level}>`;
+  }
+  return `<p>${inline(block.replace(/\n/g, " "))}</p>`;
+}
+
+function inline(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/_(.+?)_/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
