@@ -35,13 +35,19 @@ export function listTestCases(): TestCase[] {
   if (!fs.existsSync(TEST_CASES_DIR)) return [];
 
   return subdirs(TEST_CASES_DIR)
-    .flatMap((feature) => markdownFiles(path.join(TEST_CASES_DIR, feature)).map((file) => parseTestCase(file, feature)))
+    .flatMap((feature) =>
+      markdownFiles(path.join(TEST_CASES_DIR, feature)).map((file) =>
+        parseTestCase(file, feature),
+      ),
+    )
     .filter((testCase): testCase is TestCase => testCase !== null)
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 function parseTestCase(filePath: string, feature: string): TestCase | null {
-  const { frontmatter, body } = splitFrontmatter(fs.readFileSync(filePath, "utf8"));
+  const { frontmatter, body } = splitFrontmatter(
+    fs.readFileSync(filePath, "utf8"),
+  );
   const meta = parseYaml(frontmatter);
 
   const id = str(meta.id);
@@ -84,7 +90,9 @@ function markdownFiles(dir: string): string[] {
 
 function splitFrontmatter(raw: string): { frontmatter: string; body: string } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-  return match ? { frontmatter: match[1], body: match[2].trim() } : { frontmatter: "", body: raw.trim() };
+  return match
+    ? { frontmatter: match[1], body: match[2].trim() }
+    : { frontmatter: "", body: raw.trim() };
 }
 
 function parseYaml(text: string): Frontmatter {
@@ -105,7 +113,9 @@ function parseAutomation(value: unknown): TestCaseAutomation | null {
 
 function parseSteps(value: unknown): TestCaseStep[] {
   if (!Array.isArray(value)) return [];
-  return value.map(toStep).filter((step): step is TestCaseStep => step !== null);
+  return value
+    .map(toStep)
+    .filter((step): step is TestCaseStep => step !== null);
 }
 
 function toStep(raw: unknown): TestCaseStep | null {
@@ -114,14 +124,17 @@ function toStep(raw: unknown): TestCaseStep | null {
   }
   const step = raw as { action?: unknown; data?: unknown; expected?: unknown };
   const action = str(step?.action);
-  return action ? { action, data: str(step?.data), expected: strList(step?.expected) } : null;
+  return action
+    ? { action, data: str(step?.data), expected: strList(step?.expected) }
+    : null;
 }
 
 // ── Value coercion ──────────────────────────────────────────────────
 
 function str(value: unknown): string | null {
   if (typeof value === "string") return value.trim() || null;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
   return null;
 }
 

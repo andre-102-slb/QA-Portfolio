@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const testPaths =
     typeof body.test_paths === "string" && body.test_paths.trim()
       ? body.test_paths.trim()
-      : "frontend-tests/smoke/login frontend-tests/regression/login";
+      : "frontend-tests/specs/smoke/login frontend-tests/specs/regression/login";
   const retryCount = body.retries === 2 || body.retries === "2" ? "2" : "0";
   const runName =
     typeof body.run_name === "string" && body.run_name.trim() ? body.run_name.trim() : "";

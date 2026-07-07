@@ -4,6 +4,9 @@
   "description": "Playwright QA portfolio with a dashboard to trigger runs, browse reports and test cases.",
   "scripts": {
     "test": "playwright test",
+    "test:normal": "playwright test frontend-tests/specs/regression/",
+    "test:smoke": "playwright test frontend-tests/specs/smoke/",
+    "test:all": "playwright test frontend-tests/specs/regression/ && playwright test frontend-tests/specs/smoke/",
     "build": "tsx scripts/build.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -19,11 +22,13 @@
     "tsx": "^4.19.4"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.5.0",
     "@playwright/test": "^1.61.1",
     "@types/adm-zip": "^0.5.8",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^26.0.1",
     "@vercel/node": "^5.1.14",
+    "dotenv": "^17.4.2",
     "typescript": "^5.8.3"
   }
 }

@@ -244,13 +244,15 @@
     .suite-tag {
       display: inline-block;
       font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 4px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 3px;
       margin-top: 4px;
       font-family: var(--mono);
+      text-transform: lowercase;
     }
-    .tag-regression   { background: #deebff; color: #0747a6; }
-    .tag-smoke { background: #e3fcef; color: #006644; }
+    .tag-smoke  { background: #e3fcef; color: #006644; }
+    .tag-normal { background: #deebff; color: #0747a6; }
 
     /* ── Run panel ── */
     .run-panel {
@@ -301,6 +303,14 @@
     .btn-run:hover   { opacity: 0.88; }
     .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-run i { font-size: 15px; }
+
+    .run-hint {
+      margin-top: 0.6rem;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.45;
+    }
 
     .run-name-wrap { margin-bottom: 0.75rem; }
     .run-name-label {
@@ -956,6 +966,7 @@
           <button class="btn-run" id="run-btn" onclick="runTests()">
             <i class="ti ti-player-play"></i> Run selected
           </button>
+          <p class="run-hint">This will trigger a GitHub Actions workflow to run the selected Playwright suites.</p>
 
           <div class="progress-wrap" id="progress-wrap">
             <div class="progress-track">

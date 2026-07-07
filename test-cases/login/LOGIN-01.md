@@ -1,5 +1,5 @@
 ---
-id: SMK-LOGIN-01
+id: LOGIN-01
 title: Verify if the username and password fields are visible and clickable
 suite: login
 group: smoke
@@ -9,7 +9,7 @@ tags:
   - login
 automated: true
 automation:
-  path: frontend-tests/smoke/login/example.spec.ts
+  path: frontend-tests/regression/login/login.spec.ts
   test: Verify if the username and password fields are visible and clickable
 precondition: The SauceDemo site is reachable and the login page is the entry point.
 steps:
@@ -17,6 +17,7 @@ steps:
     expected:
       - User is able to navigate to the website
       - The login page is displayed
+      - The user is able to see the page tittle "Swag Labs"
   - action: Verify the username and password fields
     expected:
       - Username field is visible and accepts input

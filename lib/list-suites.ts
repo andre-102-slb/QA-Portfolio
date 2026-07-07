@@ -2,29 +2,31 @@ import fs from "fs";
 import path from "path";
 import type { SuiteGroup } from "./types";
 
-const TESTS_DIR = path.join(process.cwd(), "frontend-tests");
+const SPECS_DIR = path.join(process.cwd(), "frontend-tests", "specs");
 
-const GROUP_LABELS: Record<string, { name: string; tag: string }> = {
-  smoke: { name: "Smoke Tests", tag: "smoke" },
-  regression: { name: "Regression Tests", tag: "e2e" },
-};
+const GROUPS = [
+  { id: "smoke", name: "Smoke Tests", tag: "smoke" },
+  { id: "regression", name: "Regression Tests", tag: "normal" },
+] as const;
 
-/** Builds the suite tree from the `frontend-tests/<group>/<suite>` folder layout. */
+/** Lists only Smoke and Regression suites from `frontend-tests/specs/`. */
 export function listSuites(): SuiteGroup[] {
-  if (!fs.existsSync(TESTS_DIR)) return [];
+  return GROUPS.flatMap(({ id, name, tag }) => {
+    const groupDir = path.join(SPECS_DIR, id);
+    if (!fs.existsSync(groupDir)) return [];
 
-  return subdirs(TESTS_DIR).map((groupId) => {
-    const label = GROUP_LABELS[groupId] ?? { name: `${groupId} Tests`, tag: "e2e" };
-    return {
-      id: groupId,
-      name: label.name,
-      tag: label.tag,
-      path: `frontend-tests/${groupId}`,
-      children: subdirs(path.join(TESTS_DIR, groupId)).map((name) => ({
+    return [
+      {
+        id,
         name,
-        path: `frontend-tests/${groupId}/${name}`,
-      })),
-    };
+        tag,
+        path: `frontend-tests/specs/${id}`,
+        children: subdirs(groupDir).map((suite) => ({
+          name: suite,
+          path: `frontend-tests/specs/${id}/${suite}`,
+        })),
+      },
+    ];
   });
 }
 
