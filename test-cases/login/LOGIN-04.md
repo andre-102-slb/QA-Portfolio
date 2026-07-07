@@ -9,8 +9,8 @@ tags:
   - login
 automated: true
 automation:
-  path: frontend-tests/smoke/login/login.spec.ts
-  test: Verify if a error message appears after inserting an invalid credentials
+  path: frontend-tests/specs/smoke/login/login.spec.ts
+  test: LOGIN-04 - Verify if a error message appears after inserting an invalid credentials
 precondition: The SauceDemo site is reachable and the login page is the entry point.
 steps:
   - action: Go to "https://www.saucedemo.com/"

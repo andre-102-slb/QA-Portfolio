@@ -9,15 +9,15 @@ tags:
   - login
 automated: true
 automation:
-  path: frontend-tests/smoke/login/login.spec.ts
-  test: Verify if the block user message appears
+  path: frontend-tests/specs/regression/login/login.spec.ts
+  test: LOGIN-02 - Verify if the block user message appears
 precondition: The SauceDemo site is reachable and the login page is the entry point.
 steps:
   - action: Go to "https://www.saucedemo.com/"
     expected:
       - User is able to navigate to the website
       - The login page is displayed
-  - action: Insert the username - locked_out_user
+  - action: Insert the username
     expected:
       - Username field accepts input
   - action: Insert the password
