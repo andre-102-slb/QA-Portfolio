@@ -11,20 +11,21 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #f4f5f7;
-      --surface:   #ffffff;
-      --surface2:  #f4f5f7;
-      --border:    #dfe1e6;
-      --text:      #172b4d;
-      --muted:     #5e6c84;
-      --accent:    #0052cc;
-      --accent-bg: rgba(0, 82, 204, 0.08);
-      --accent-bd: rgba(0, 82, 204, 0.35);
-      --on-accent: #ffffff;
-      --pass:      #00875a;
-      --fail:      #de350b;
-      --warn:      #974f0c;
-      --info:      #0052cc;
+      color-scheme: dark;
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --accent-bg: rgba(88, 166, 255, 0.12);
+      --accent-bd: rgba(88, 166, 255, 0.4);
+      --on-accent: #0d1117;
+      --pass:      #3fb950;
+      --fail:      #f85149;
+      --warn:      #d29922;
+      --info:      #58a6ff;
       --radius:    8px;
       --mono:      'JetBrains Mono', monospace;
       --sans:      'Inter', sans-serif;
@@ -96,8 +97,8 @@
       font-size: 10px;
       padding: 1px 6px;
       border-radius: 10px;
-      background: #ffebe6;
-      color: #bf2600;
+      background: rgba(248, 81, 73, 0.15);
+      color: #f85149;
       font-family: var(--mono);
     }
     .nav-badge:empty,
@@ -251,8 +252,8 @@
       font-family: var(--mono);
       text-transform: lowercase;
     }
-    .tag-smoke  { background: #e3fcef; color: #006644; }
-    .tag-normal { background: #deebff; color: #0747a6; }
+    .tag-smoke  { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+    .tag-normal { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
 
     /* ── Run panel ── */
     .run-panel {
@@ -467,9 +468,9 @@
       font-size: 10px;
       font-family: var(--mono);
     }
-    .live-status-pass { background: #e3fcef; color: #006644; }
-    .live-status-fail { background: #ffebe6; color: #bf2600; }
-    .live-status-skip { background: #fff7d6; color: #974f0c; }
+    .live-status-pass { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+    .live-status-fail { background: rgba(248, 81, 73, 0.15); color: #f85149; }
+    .live-status-skip { background: rgba(210, 153, 34, 0.15); color: #d29922; }
     .live-results-hint {
       margin-top: 0.75rem;
       font-size: 12px;
@@ -522,7 +523,7 @@
       min-height: 480px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: #fff;
+      background: var(--surface);
     }
 
     /* ── Reports ── */
@@ -559,8 +560,8 @@
       font-size: 17px;
       flex-shrink: 0;
     }
-    .icon-pass { background: #e3fcef; color: #006644; }
-    .icon-fail { background: #ffebe6; color: #bf2600; }
+    .icon-pass { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+    .icon-fail { background: rgba(248, 81, 73, 0.15); color: #f85149; }
     .report-info { flex: 1; min-width: 0; }
     .report-name { font-size: 13px; font-weight: 500; }
     .report-date { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
@@ -750,11 +751,11 @@
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
-    .case-badge.auto { background: #e3fcef; color: #006644; }
-    .case-badge.manual { background: #dfe1e6; color: #42526e; }
-    .case-badge.prio-high { background: #ffebe6; color: #bf2600; }
-    .case-badge.prio-medium { background: #fff7d6; color: #974f0c; }
-    .case-badge.prio-low { background: #deebff; color: #0747a6; }
+    .case-badge.auto { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+    .case-badge.manual { background: rgba(139, 148, 158, 0.2); color: #8b949e; }
+    .case-badge.prio-high { background: rgba(248, 81, 73, 0.15); color: #f85149; }
+    .case-badge.prio-medium { background: rgba(210, 153, 34, 0.15); color: #d29922; }
+    .case-badge.prio-low { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
     .case-tag {
       font-size: 10px;
       padding: 2px 8px;
@@ -861,7 +862,7 @@
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #484f58; border-radius: 3px; }
   </style>
 </head>
 <body>

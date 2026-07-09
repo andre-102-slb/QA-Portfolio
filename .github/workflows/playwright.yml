@@ -2,6 +2,10 @@ name: Playwright Tests
 run-name: ${{ github.event.inputs.run_name || 'Playwright Tests' }}
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       test_paths:
@@ -35,11 +39,13 @@ jobs:
       - run: npx playwright install-deps chromium && npx playwright install chromium
 
       - name: Run tests
-        run: >
-          npx playwright test
-          ${{ github.event.inputs.test_paths }}
-          --project=chromium
-          --retries=${{ github.event.inputs.retries || 0 }}
+        run: |
+          RETRIES="${{ github.event.inputs.retries || '0' }}"
+          if [ -n "${{ github.event.inputs.test_paths }}" ]; then
+            npx playwright test ${{ github.event.inputs.test_paths }} --project=chromium --retries="$RETRIES"
+          else
+            npx playwright test --project=chromium --retries="$RETRIES"
+          fi
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
