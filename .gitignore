@@ -15,4 +15,7 @@ node_modules/
 
 # Vercel & secrets
 .vercel
-.env*
+.env
+.env.local
+.env.*.local
+!.env.example

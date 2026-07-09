@@ -2,32 +2,27 @@ name: Playwright Tests
 run-name: ${{ github.event.inputs.run_name || 'Playwright Tests' }}
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
     inputs:
       test_paths:
-        description: "Test paths (space-separated)"
-        required: false
-        default: "frontend-tests/specs/smoke/login frontend-tests/specs/regression/login"
+        description: Test paths (space-separated)
         type: string
       retries:
-        description: "Retries on failure (0 or 2)"
-        required: false
+        description: Retries on failure (0 or 2)
         default: "0"
         type: string
       run_name:
-        description: "Custom run name (dashboard)"
-        required: false
+        description: Custom run name (shown in dashboard)
         default: ""
         type: string
 
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      BLOCKED_USERNAME: ${{ secrets.BLOCKED_USERNAME }}
+      VALID_PASSWORD: ${{ secrets.VALID_PASSWORD }}
+      VALID_USERNAME: ${{ secrets.VALID_USERNAME }}
     steps:
       - uses: actions/checkout@v4
 
@@ -35,39 +30,16 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install-deps chromium && npx playwright install chromium
 
-      - name: Install Playwright system dependencies
-        run: npx playwright install-deps chromium
-
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
-
-      - name: Run Playwright tests
-        run: |
-          RETRIES="${{ github.event.inputs.retries }}"
-          if [ -z "$RETRIES" ]; then RETRIES=0; fi
-
-          if [ -n "${{ github.event.inputs.test_paths }}" ]; then
-            npx playwright test ${{ github.event.inputs.test_paths }} --project=chromium --retries="$RETRIES"
-          else
-            npx playwright test --project=chromium --retries="$RETRIES"
-          fi
-
-      - name: Write run metadata
-        if: ${{ !cancelled() }}
-        env:
-          RUN_NAME: ${{ github.event.inputs.run_name }}
-        run: |
-          node -e "const fs=require('fs'); const n=(process.env.RUN_NAME||'').trim(); if(n) fs.writeFileSync('playwright-report/run-meta.json', JSON.stringify({ name: n }));"
+      - name: Run tests
+        run: >
+          npx playwright test
+          ${{ github.event.inputs.test_paths }}
+          --project=chromium
+          --retries=${{ github.event.inputs.retries || 0 }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
