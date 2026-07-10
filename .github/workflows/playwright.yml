@@ -31,7 +31,6 @@ jobs:
       BLOCKED_USERNAME: ${{ secrets.BLOCKED_USERNAME }}
       VALID_PASSWORD: ${{ secrets.VALID_PASSWORD }}
       VALID_USERNAME: ${{ secrets.VALID_USERNAME }}
-      PW_CAPTURE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.capture_on_fail == 'true' && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,10 +45,15 @@ jobs:
       - name: Run tests
         run: |
           RETRIES="${{ github.event.inputs.retries || '0' }}"
-          if [ -n "${{ github.event.inputs.test_paths }}" ]; then
-            npx playwright test ${{ github.event.inputs.test_paths }} --project=chromium --retries="$RETRIES"
+          if [ "${{ github.event.inputs.capture_on_fail }}" = "true" ]; then
+            CMD="npm run test:capture"
           else
-            npx playwright test --project=chromium --retries="$RETRIES"
+            CMD="npx playwright test"
+          fi
+          if [ -n "${{ github.event.inputs.test_paths }}" ]; then
+            $CMD -- ${{ github.event.inputs.test_paths }} --project=chromium --retries="$RETRIES"
+          else
+            $CMD -- --project=chromium --retries="$RETRIES"
           fi
 
       - uses: actions/upload-artifact@v4

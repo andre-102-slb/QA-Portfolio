@@ -952,7 +952,7 @@
             <button class="opt-toggle" id="opt-retry" type="button" onclick="this.classList.toggle('on')">
               <i class="ti ti-refresh"></i> Retry on fail
             </button>
-            <button class="opt-toggle" id="opt-snapshot" type="button" onclick="runTests({ captureOnFail: true })">
+            <button class="opt-toggle" id="opt-snapshot" type="button" onclick="this.classList.toggle('on')">
               <i class="ti ti-camera"></i> Snapshot on fail
             </button>
           </div>
@@ -1461,13 +1461,18 @@
     return document.getElementById("opt-retry").classList.contains("on") ? 2 : 0;
   }
 
-  function buildRunCommand({ captureOnFail = false } = {}) {
+  function getCaptureOnFail() {
+    return document.getElementById("opt-snapshot").classList.contains("on");
+  }
+
+  function buildRunCommand() {
     const paths = getSelectedPaths();
     const retries = getRetries();
-    const prefix = captureOnFail ? "PW_CAPTURE=1 " : "";
+    const captureOnFail = getCaptureOnFail();
     const retryFlag = `--retries=${retries}`;
-    if (paths.length === 0) return `${prefix}npx playwright test ${retryFlag}`;
-    return `${prefix}npx playwright test ${paths.join(" ")} ${retryFlag}`;
+    const base = captureOnFail ? "npm run test:capture" : "npx playwright test";
+    if (paths.length === 0) return `${base} -- ${retryFlag}`;
+    return `${base} -- ${paths.join(" ")} ${retryFlag}`;
   }
 
   function appendLog(cls, msg) {
@@ -1950,7 +1955,7 @@
     appendLog("warn", "  Polling stopped — run may still be in progress");
   }
 
-  async function runTests({ captureOnFail = false } = {}) {
+  async function runTests() {
     clearRunValidationErrors();
 
     const paths = getSelectedPaths();
@@ -1973,7 +1978,8 @@
     const label = document.getElementById("progress-label");
     const testPaths = paths.join(" ");
     const retries = getRetries();
-    const command = buildRunCommand({ captureOnFail });
+    const captureOnFail = getCaptureOnFail();
+    const command = buildRunCommand();
     const suiteLabel = paths.map((p) => p.split("/").slice(-2).join("/")).join(", ");
 
     btn.disabled = true;
@@ -1988,6 +1994,7 @@
 
     appendLog("info", "▶  Starting test run");
     appendLog("info", "  Run · " + runName);
+    if (captureOnFail) appendLog("info", "  Snapshot on fail · enabled (test:capture)");
     appendLog("muted", "$ " + command);
 
     try {
