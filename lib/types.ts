@@ -35,6 +35,7 @@ export interface TriggerBody {
   test_paths?: string;
   retries?: number | string;
   run_name?: string;
+  capture_on_fail?: boolean | string;
 }
 
 export interface ReportSummary {

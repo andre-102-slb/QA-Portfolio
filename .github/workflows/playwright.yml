@@ -19,6 +19,10 @@ on:
         description: Custom run name (shown in dashboard)
         default: ""
         type: string
+      capture_on_fail:
+        description: Save screenshot, video and trace on failure
+        default: "false"
+        type: string
 
 jobs:
   test:
@@ -27,6 +31,7 @@ jobs:
       BLOCKED_USERNAME: ${{ secrets.BLOCKED_USERNAME }}
       VALID_PASSWORD: ${{ secrets.VALID_PASSWORD }}
       VALID_USERNAME: ${{ secrets.VALID_USERNAME }}
+      PW_CAPTURE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.capture_on_fail == 'true' && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
 

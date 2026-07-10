@@ -4,9 +4,10 @@
   "description": "Playwright QA portfolio with a dashboard to trigger runs, browse reports and test cases.",
   "scripts": {
     "test": "playwright test",
+    "test:capture": "PW_CAPTURE=1 playwright test",
     "test:normal": "playwright test frontend-tests/specs/regression/",
     "test:smoke": "playwright test frontend-tests/specs/smoke/",
-    "test:all": "playwright test frontend-tests/specs/regression/ && playwright test frontend-tests/specs/smoke/",
+    "test:all": "playwright test",
     "build": "tsx scripts/build.ts",
     "typecheck": "tsc --noEmit"
   },

@@ -31,6 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? body.test_paths.trim()
       : "frontend-tests/specs/smoke/login frontend-tests/specs/regression/login";
   const retryCount = body.retries === 2 || body.retries === "2" ? "2" : "0";
+  const captureOnFail =
+    body.capture_on_fail === true || body.capture_on_fail === "true";
   const runName =
     typeof body.run_name === "string" && body.run_name.trim() ? body.run_name.trim() : "";
 
@@ -51,7 +53,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         ref: GITHUB_REF,
-        inputs: { test_paths: testPaths, retries: retryCount, run_name: runName },
+        inputs: {
+          test_paths: testPaths,
+          retries: retryCount,
+          run_name: runName,
+          capture_on_fail: captureOnFail ? "true" : "false",
+        },
       }),
     }
   );
@@ -68,6 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     test_paths: testPaths,
     retries: retryCount,
     run_name: runName,
+    capture_on_fail: captureOnFail,
     run_id: run?.id ?? null,
     run_url: run?.html_url ?? null,
     actions_url: `https://github.com/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}`,

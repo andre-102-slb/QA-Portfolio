@@ -252,8 +252,9 @@
       font-family: var(--mono);
       text-transform: lowercase;
     }
-    .tag-smoke  { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
-    .tag-normal { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+    .tag-smoke    { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+    .tag-normal   { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+    .tag-negative { background: rgba(248, 81, 73, 0.15); color: #f85149; }
 
     /* ── Run panel ── */
     .run-panel {
@@ -282,6 +283,7 @@
       text-align: center;
     }
     .opt-toggle.on { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-bd); }
+    .opt-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
     .opt-toggle i { font-size: 14px; }
 
     .btn-run {
@@ -947,8 +949,11 @@
         <div class="run-panel">
           <div class="run-panel-label">Options</div>
           <div class="options-row">
-            <button class="opt-toggle" id="opt-retry" onclick="this.classList.toggle('on')">
+            <button class="opt-toggle" id="opt-retry" type="button" onclick="this.classList.toggle('on')">
               <i class="ti ti-refresh"></i> Retry on fail
+            </button>
+            <button class="opt-toggle" id="opt-snapshot" type="button" onclick="runTests({ captureOnFail: true })">
+              <i class="ti ti-camera"></i> Snapshot on fail
             </button>
           </div>
 
@@ -1456,12 +1461,13 @@
     return document.getElementById("opt-retry").classList.contains("on") ? 2 : 0;
   }
 
-  function buildRunCommand() {
+  function buildRunCommand({ captureOnFail = false } = {}) {
     const paths = getSelectedPaths();
     const retries = getRetries();
+    const prefix = captureOnFail ? "PW_CAPTURE=1 " : "";
     const retryFlag = `--retries=${retries}`;
-    if (paths.length === 0) return `npx playwright test ${retryFlag}`;
-    return `npx playwright test ${paths.join(" ")} ${retryFlag}`;
+    if (paths.length === 0) return `${prefix}npx playwright test ${retryFlag}`;
+    return `${prefix}npx playwright test ${paths.join(" ")} ${retryFlag}`;
   }
 
   function appendLog(cls, msg) {
@@ -1944,7 +1950,7 @@
     appendLog("warn", "  Polling stopped — run may still be in progress");
   }
 
-  async function runTests() {
+  async function runTests({ captureOnFail = false } = {}) {
     clearRunValidationErrors();
 
     const paths = getSelectedPaths();
@@ -1960,16 +1966,18 @@
     }
 
     const btn = document.getElementById("run-btn");
+    const snapshotBtn = document.getElementById("opt-snapshot");
     const term = document.getElementById("terminal");
     const wrap = document.getElementById("progress-wrap");
     const fill = document.getElementById("progress-fill");
     const label = document.getElementById("progress-label");
     const testPaths = paths.join(" ");
     const retries = getRetries();
-    const command = buildRunCommand();
+    const command = buildRunCommand({ captureOnFail });
     const suiteLabel = paths.map((p) => p.split("/").slice(-2).join("/")).join(", ");
 
     btn.disabled = true;
+    if (snapshotBtn) snapshotBtn.disabled = true;
     btn.innerHTML = "<i class=\"ti ti-loader\"></i> Running…";
     term.innerHTML = "";
     term.classList.add("show");
@@ -1986,7 +1994,12 @@
       const res = await fetch(CONFIG.triggerApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test_paths: testPaths, retries, run_name: runName }),
+        body: JSON.stringify({
+          test_paths: testPaths,
+          retries,
+          run_name: runName,
+          capture_on_fail: captureOnFail,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -2014,6 +2027,7 @@
     }
 
     btn.disabled = false;
+    if (snapshotBtn) snapshotBtn.disabled = false;
     btn.innerHTML = "<i class=\"ti ti-player-play\"></i> Run selected";
   }
 

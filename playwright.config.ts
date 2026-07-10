@@ -5,6 +5,9 @@ import path from "path";
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 dotenv.config({ path: path.resolve(__dirname, ".env.local") });
 
+/** Set PW_CAPTURE=1 to save screenshot, video and trace only when a test fails. */
+const captureOnFailure = process.env.PW_CAPTURE === "1";
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -31,8 +34,9 @@ export default defineConfig({
 
     testIdAttribute: "data-test",
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on-first-retry",
+    screenshot: captureOnFailure ? "only-on-failure" : "off",
+    video: captureOnFailure ? "retain-on-failure" : "off",
+    trace: captureOnFailure ? "retain-on-failure" : "off",
   },
 
   /* Configure projects for major browsers */
