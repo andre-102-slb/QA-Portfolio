@@ -33,7 +33,12 @@
 
     body {
       font-family: var(--sans);
-      background: var(--bg);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 90% 60% at 15% -10%, rgba(88, 166, 255, 0.14), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 95% 15%, rgba(63, 185, 80, 0.08), transparent 50%),
+        radial-gradient(ellipse 60% 45% at 50% 110%, rgba(88, 166, 255, 0.06), transparent 55%),
+        linear-gradient(180deg, #0d1117 0%, #090c10 100%);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -41,13 +46,33 @@
     }
 
     /* ── Layout ── */
-    .app { display: flex; flex: 1; min-height: 100vh; }
+    .app { display: flex; flex: 1; min-height: 100vh; position: relative; }
+
+    .app::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(48, 54, 61, 0.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(48, 54, 61, 0.22) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, #000 20%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .sidebar,
+    .main {
+      position: relative;
+      z-index: 1;
+    }
 
     /* ── Sidebar ── */
     .sidebar {
       width: 220px;
       flex-shrink: 0;
-      background: var(--surface);
+      background: rgba(22, 27, 34, 0.92);
+      backdrop-filter: blur(10px);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -121,7 +146,8 @@
     .topbar {
       padding: 0.875rem 1.5rem;
       border-bottom: 1px solid var(--border);
-      background: var(--surface);
+      background: rgba(22, 27, 34, 0.88);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: space-between;

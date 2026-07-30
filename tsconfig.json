@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
@@ -10,5 +10,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["api/**/*.ts", "lib/**/*.ts", "scripts/**/*.ts", "playwright.config.ts", "frontend-tests/**/*.ts"]
+  "include": ["api/**/*.ts", "lib/**/*.ts", "scripts/**/*.ts", "playwright.config.ts"]
 }
