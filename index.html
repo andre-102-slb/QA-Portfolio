@@ -6,7 +6,7 @@
     <title>QA Portfolio — Andre Calheiros</title>
     <meta
       name="description"
-      content="Portfolio de QA automation: casos documentados, runs Playwright e relatórios reais."
+      content="QA automation portfolio: documented cases, Playwright runs, and live reports."
     />
     <meta name="theme-color" content="#1a2230" />
     <link
@@ -52,15 +52,20 @@
         --space-4: 16px;
         --space-5: 24px;
         --space-6: 32px;
-        --text-display: clamp(2.35rem, 5.2vw, 3.85rem);
+        --text-display: clamp(2.25rem, 5vw, 3.5rem);
         --text-title: 1.3125rem;
+        --text-lede: 1.125rem;
         --text-body: 1rem;
+        --text-ui: 0.9375rem;
         --text-label: 0.8125rem;
         --text-meta: 0.75rem;
-        --leading-display: 1.05;
-        --leading-body: 1.5;
-        --track-display: -0.03em;
+        --leading-display: 1.08;
+        --leading-title: 1.18;
+        --leading-lede: 1.55;
+        --leading-body: 1.55;
+        --track-display: -0.028em;
         --track-title: -0.022em;
+        --track-body: 0.006em;
         --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", monospace;
         --sans:
           -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
@@ -90,6 +95,7 @@
         font-family: var(--sans);
         font-size: var(--text-body);
         line-height: var(--leading-body);
+        letter-spacing: var(--track-body);
         background: var(--bg);
         color: var(--text);
         min-height: 100dvh;
@@ -239,14 +245,14 @@
         transform: scale(0.97);
       }
       .logo-title {
-        font-size: 15px;
+        font-size: var(--text-ui);
         font-weight: 600;
         color: var(--text);
-        letter-spacing: -0.022em;
+        letter-spacing: var(--track-title);
         line-height: 1.2;
       }
       .logo-sub {
-        font-size: 12px;
+        font-size: var(--text-meta);
         color: var(--muted);
         margin-top: 4px;
         letter-spacing: 0.01em;
@@ -356,7 +362,7 @@
         font-size: var(--text-title);
         font-weight: 600;
         letter-spacing: var(--track-title);
-        line-height: 1.15;
+        line-height: var(--leading-title);
       }
       .page-title.title-in {
         animation: title-in 280ms var(--ease-out);
@@ -1076,6 +1082,24 @@
         color: var(--text);
         padding: 1rem 1.05rem 0.75rem;
       }
+      .reports-unavailable {
+        margin: 0 1.05rem 1.1rem;
+        padding: 1.15rem 1.2rem;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .reports-unavailable[hidden],
+      .report-frame[hidden] {
+        display: none;
+      }
+      .reports-unavailable a {
+        color: var(--accent);
+        font-weight: 600;
+      }
       .reports-viewer-clip .report-frame {
         margin: 0 1.05rem 1.1rem;
         width: calc(100% - 2.1rem);
@@ -1119,12 +1143,19 @@
         border-radius: 0;
         padding: 0.95rem 1.05rem;
         min-height: 64px;
+        width: 100%;
         display: flex;
         align-items: center;
         gap: 12px;
         text-decoration: none;
         color: inherit;
+        font-family: var(--sans);
+        text-align: left;
+        cursor: pointer;
         transition: background var(--press);
+      }
+      .report-row:disabled {
+        cursor: default;
       }
       .report-item + .report-item {
         border-top: 1px solid var(--border);
@@ -1176,6 +1207,15 @@
         font-size: 13px;
         flex-shrink: 0;
         color: var(--muted);
+      }
+      .report-row-chevron {
+        color: var(--muted);
+        display: flex;
+        flex-shrink: 0;
+        transition: transform 160ms var(--ease-out);
+      }
+      .report-row.active .report-row-chevron {
+        transform: rotate(90deg);
       }
       .s-pass {
         color: var(--pass);
@@ -1234,7 +1274,7 @@
         padding: 1.15rem 1.1rem 1.25rem;
       }
       .metric-label {
-        font-size: 13px;
+        font-size: var(--text-label);
         font-weight: 500;
         color: var(--muted);
         margin-bottom: 10px;
@@ -1244,11 +1284,11 @@
         font-weight: 600;
         font-family: var(--mono);
         font-variant-numeric: tabular-nums;
-        letter-spacing: -0.04em;
+        letter-spacing: var(--track-title);
         line-height: 1.05;
       }
       .metric-sub {
-        font-size: 12px;
+        font-size: var(--text-meta);
         color: var(--muted);
         margin-top: 8px;
         line-height: 1.35;
@@ -1425,10 +1465,10 @@
         padding: 1rem;
       }
       .case-detail-title {
-        font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+        font-size: clamp(1.3rem, 2.4vw, 1.65rem);
         font-weight: 600;
-        letter-spacing: -0.03em;
-        line-height: 1.18;
+        letter-spacing: var(--track-title);
+        line-height: var(--leading-title);
         margin: 0 0 var(--space-3);
         color: var(--text);
         text-wrap: balance;
@@ -1697,11 +1737,11 @@
         max-width: 38rem;
       }
       .landing-name {
-        font-size: 1.125rem;
+        font-size: var(--text-ui);
         font-weight: 500;
         color: var(--muted);
         margin-bottom: var(--space-3);
-        letter-spacing: -0.015em;
+        letter-spacing: 0.01em;
       }
       .landing-title {
         font-size: var(--text-display);
@@ -1712,10 +1752,10 @@
         margin-bottom: var(--space-5);
       }
       .landing-lede {
-        font-size: 1.125rem;
-        line-height: 1.55;
+        font-size: var(--text-lede);
+        line-height: var(--leading-lede);
         color: var(--muted);
-        max-width: 36em;
+        max-width: 58ch;
         margin-bottom: var(--space-6);
         text-wrap: pretty;
       }
@@ -1730,11 +1770,11 @@
         color: var(--on-accent);
         border: none;
         border-radius: 980px;
-        font-size: 1.0625rem;
+        font-size: var(--text-lede);
         font-weight: 600;
         font-family: var(--sans);
         cursor: pointer;
-        letter-spacing: -0.01em;
+        letter-spacing: -0.012em;
         box-shadow: 0 10px 28px oklch(0.45 0.16 250 / 0.35);
         transition:
           opacity var(--press),
@@ -1812,17 +1852,17 @@
       }
       .landing-path-n {
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-meta);
         color: var(--accent);
         font-variant-numeric: tabular-nums;
       }
       .landing-path-label {
-        font-size: 16px;
+        font-size: var(--text-body);
         font-weight: 600;
-        letter-spacing: -0.015em;
+        letter-spacing: var(--track-title);
       }
       .landing-path-hint {
-        font-size: 12px;
+        font-size: var(--text-meta);
         color: var(--muted);
         margin-top: 2px;
       }
@@ -2064,19 +2104,17 @@
     </style>
   </head>
   <body class="stage-landing">
-    <a class="skip-link" id="skip-link" href="#start-btn"
-      >Saltar para Começar</a
-    >
+    <a class="skip-link" id="skip-link" href="#start-btn">Skip to Get started</a>
 
-    <section class="landing" id="landing" aria-label="Página inicial">
+    <section class="landing" id="landing" aria-label="Home">
       <div class="landing-copy">
         <p class="landing-name">Andre Calheiros</p>
         <h1 class="landing-title">
-          Casos documentados. Runs reais. Relatórios que se abrem.
+          Documented cases. Real runs. Reports you can open.
         </h1>
         <p class="landing-lede">
-          Portfolio de automação em TypeScript: casos em estilo Xray, suites
-          Playwright e um dashboard que dispara o CI e devolve o report.
+          TypeScript automation portfolio: Xray-style cases, Playwright suites,
+          and a dashboard that dispatches CI and returns the report.
         </p>
         <button
           class="btn-start"
@@ -2084,7 +2122,7 @@
           type="button"
           onclick="enterApp()"
         >
-          Começar
+          Get started
           <i class="ti ti-arrow-right" aria-hidden="true"></i>
         </button>
       </div>
@@ -2098,28 +2136,28 @@
             <span class="landing-path-n">01</span>
             <div>
               <div class="landing-path-label">Test cases</div>
-              <div class="landing-path-hint">Passos, prioridade, automação</div>
+              <div class="landing-path-hint">Steps, priority, automation</div>
             </div>
           </li>
           <li>
             <span class="landing-path-n">02</span>
             <div>
               <div class="landing-path-label">Run tests</div>
-              <div class="landing-path-hint">GitHub Actions, ao vivo</div>
+              <div class="landing-path-hint">GitHub Actions, live</div>
             </div>
           </li>
           <li>
             <span class="landing-path-n">03</span>
             <div>
               <div class="landing-path-label">Reports</div>
-              <div class="landing-path-hint">HTML Playwright</div>
+              <div class="landing-path-hint">Playwright HTML</div>
             </div>
           </li>
           <li>
             <span class="landing-path-n">04</span>
             <div>
               <div class="landing-path-label">Stats</div>
-              <div class="landing-path-hint">Pass rate e falhas recentes</div>
+              <div class="landing-path-hint">Pass rate and recent failures</div>
             </div>
           </li>
         </ol>
@@ -2133,7 +2171,7 @@
           class="logo"
           type="button"
           onclick="leaveApp()"
-          aria-label="Voltar à página inicial"
+          aria-label="Back to home"
         >
           <div class="logo-title">QA Portfolio</div>
           <div class="logo-sub">Andre Calheiros</div>
@@ -2190,7 +2228,7 @@
               type="button"
               onclick="leaveApp()"
             >
-              Início
+              Home
             </button>
             <a
               class="btn-ghost"
@@ -2293,7 +2331,7 @@
               </button>
               <p class="run-hint">
                 This will trigger a GitHub Actions workflow to run the selected
-                Test Cases suites.
+                test suites.
               </p>
 
               <div class="progress-wrap" id="progress-wrap">
@@ -2419,7 +2457,7 @@
       </div>
     </div>
 
-    <nav class="tabbar" id="tabbar" aria-label="Secções" inert>
+    <nav class="tabbar" id="tabbar" aria-label="Sections" inert>
       <button
         class="nav-item active"
         data-section="test-cases"
@@ -2479,7 +2517,7 @@
         if (tabbar) tabbar.inert = !isApp;
         if (skip) {
           skip.href = isApp ? "#workspace" : "#start-btn";
-          skip.textContent = isApp ? "Skip to content" : "Saltar para Começar";
+          skip.textContent = isApp ? "Skip to content" : "Skip to Get started";
         }
       }
 
@@ -3073,18 +3111,6 @@
         if (btn) show("reports", btn);
       }
 
-      function setReportToggleButton(btn, isOpen) {
-        if (!btn) return;
-        if (isOpen) {
-          btn.innerHTML = '<i class="ti ti-chevron-up" aria-hidden="true"></i>';
-          btn.setAttribute("aria-label", "Close report");
-        } else {
-          btn.innerHTML = '<i class="ti ti-eye" aria-hidden="true"></i> View';
-          btn.setAttribute("aria-label", "View report");
-        }
-        btn.classList.toggle("is-open", isOpen);
-      }
-
       function hideReportsViewer() {
         document
           .querySelectorAll(".report-item-viewer.show")
@@ -3094,37 +3120,56 @@
             if (frame) frame.src = "about:blank";
             const item = viewer.closest(".report-item");
             const row = item?.querySelector(".report-row");
-            const btn = item?.querySelector(".btn-view");
-            if (row) row.classList.remove("active");
-            setReportToggleButton(btn, false);
+            if (row) {
+              row.classList.remove("active");
+              row.setAttribute("aria-expanded", "false");
+            }
           });
       }
 
-      function closeReportViewer(viewerEl, rowEl, toggleBtn) {
+      function closeReportViewer(viewerEl, rowEl) {
         viewerEl.classList.remove("show");
         const frame = viewerEl.querySelector(".report-frame");
         if (frame) frame.src = "about:blank";
         rowEl.classList.remove("active");
-        setReportToggleButton(toggleBtn, false);
+        rowEl.setAttribute("aria-expanded", "false");
       }
 
-      function toggleReportViewer(report, viewerEl, rowEl, toggleBtn) {
-        if (!report?.has_report || !report.report_url || !viewerEl) return;
+      function toggleReportViewer(report, viewerEl, rowEl) {
+        if (!viewerEl) return;
 
         if (viewerEl.classList.contains("show")) {
-          closeReportViewer(viewerEl, rowEl, toggleBtn);
+          closeReportViewer(viewerEl, rowEl);
           return;
         }
 
         hideReportsViewer();
         rowEl.classList.add("active");
+        rowEl.setAttribute("aria-expanded", "true");
         viewerEl.querySelector(".reports-viewer-title").textContent =
           report.title;
+
         const frame = viewerEl.querySelector(".report-frame");
+        const unavailable = viewerEl.querySelector(".reports-unavailable");
         frame.title = report.title;
         viewerEl.classList.add("show");
-        frame.src = reportUrl(report.run_id);
-        setReportToggleButton(toggleBtn, true);
+
+        if (report.has_report && report.run_id) {
+          unavailable.hidden = true;
+          frame.hidden = false;
+          frame.src = reportUrl(report.run_id);
+        } else {
+          frame.hidden = true;
+          frame.src = "about:blank";
+          unavailable.hidden = false;
+          const githubLink = report.html_url
+            ? `<a href="${escapeHtml(report.html_url)}" target="_blank" rel="noopener noreferrer">Open this run on GitHub</a>`
+            : "";
+          unavailable.innerHTML = report.status === "completed"
+            ? `<p>The Playwright report for this run is no longer available. GitHub artifacts expire after 90 days.</p>${githubLink ? `<p>${githubLink}</p>` : ""}`
+            : `<p>This run is still in progress. The Playwright report will be available when it finishes.</p>${githubLink ? `<p>${githubLink}</p>` : ""}`;
+        }
+
         viewerEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
 
@@ -3152,6 +3197,23 @@
         return `${minutes}m${String(seconds).padStart(2, "0")}s`;
       }
 
+      function friendlyApiError(raw, fallback) {
+        let message = typeof raw === "string" ? raw.trim() : "";
+        if (message.startsWith("{")) {
+          try {
+            const parsed = JSON.parse(message);
+            message = parsed.message || message;
+          } catch {
+            /* keep original */
+          }
+        }
+        if (/bad credentials/i.test(message) || /["']status["']\s*:\s*["']?401/.test(String(raw))) {
+          return "GitHub token is invalid or expired";
+        }
+        if (message.startsWith("{")) return fallback;
+        return message || fallback;
+      }
+
       let statsState = "idle";
 
       async function loadStats({ force = false } = {}) {
@@ -3176,7 +3238,10 @@
             signal: AbortSignal.timeout(12000),
           });
           const data = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          if (!res.ok)
+            throw new Error(
+              friendlyApiError(data.error, `HTTP ${res.status}`),
+            );
 
           const reports = data.reports || [];
 
@@ -3268,8 +3333,8 @@
           const raw =
             err && (err.name === "TimeoutError" || err.name === "AbortError")
               ? "request timed out"
-              : (err && err.message) || "unknown error";
-          failuresEl.innerHTML = `<div class="fail-line"><span class="fail-mark" aria-hidden="true"></span><span>Could not load stats (${escapeHtml(raw)}). <button type="button" class="inline-link-btn" onclick="loadStats({force:true})">Retry</button></span></div>`;
+              : friendlyApiError(err && err.message, "unknown error");
+          failuresEl.innerHTML = `<div class="fail-line"><span class="fail-mark" aria-hidden="true"></span><span>Could not load stats. ${escapeHtml(raw)}. <button type="button" class="inline-link-btn" onclick="loadStats({force:true})">Retry</button></span></div>`;
         }
       }
 
@@ -3301,66 +3366,56 @@
         }
 
         reports.forEach((report) => {
-          const hasReport = report.has_report;
           const iconClass =
             report.conclusion === "failure"
               ? "icon-fail"
-              : hasReport
+              : report.conclusion === "cancelled"
                 ? "icon-pass"
                 : "icon-pass";
           const icon = iconClass === "icon-fail" ? "ti-x" : "ti-check";
 
           const item = document.createElement("div");
           item.className = "report-item";
+          item.dataset.runId = String(report.run_id);
 
-          const row = document.createElement("div");
+          const row = document.createElement("button");
+          row.type = "button";
           row.className = "report-row";
+          row.setAttribute("aria-expanded", "false");
+          row.setAttribute(
+            "aria-label",
+            `${report.title}, ${formatConclusion(report.conclusion)}`,
+          );
           row.innerHTML = `
         <div class="report-icon ${iconClass}"><i class="ti ${icon}" aria-hidden="true"></i></div>
         <div class="report-info">
-          <div class="report-name">${report.title}</div>
+          <div class="report-name">${escapeHtml(report.title)}</div>
           <div class="report-date">${formatReportDate(report.created_at)}</div>
         </div>
         <div class="report-stats">
           <span class="report-conclusion">${formatConclusion(report.conclusion)}</span>
         </div>
-        ${
-          hasReport
-            ? `<button class="btn-view" type="button" aria-label="View report"><i class="ti ti-eye" aria-hidden="true"></i> View</button>`
-            : ""
-        }
+        <span class="report-row-chevron" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </span>
       `;
 
-          if (hasReport) {
-            const viewer = document.createElement("div");
-            viewer.className = "reports-viewer report-item-viewer";
-            viewer.innerHTML = `
+          const viewer = document.createElement("div");
+          viewer.className = "reports-viewer report-item-viewer";
+          viewer.innerHTML = `
           <div class="reports-viewer-clip">
             <div class="reports-viewer-title"></div>
-            <iframe class="report-frame" title="Playwright report"></iframe>
+            <div class="reports-unavailable" hidden></div>
+            <iframe class="report-frame" title="Playwright report" hidden></iframe>
           </div>
         `;
 
-            const toggleBtn = row.querySelector(".btn-view");
-            const toggleViewer = () =>
-              toggleReportViewer(report, viewer, row, toggleBtn);
+          row.addEventListener("click", () => {
+            toggleReportViewer(report, viewer, row);
+          });
 
-            toggleBtn.onclick = (e) => {
-              e.stopPropagation();
-              toggleViewer();
-            };
-            row.style.cursor = "pointer";
-            row.onclick = (e) => {
-              if (e.target.closest(".btn-view")) return;
-              toggleViewer();
-            };
-
-            item.appendChild(row);
-            item.appendChild(viewer);
-          } else {
-            item.appendChild(row);
-          }
-
+          item.appendChild(row);
+          item.appendChild(viewer);
           list.appendChild(item);
         });
 
@@ -3374,14 +3429,15 @@
           const data = await res.json().catch(() => ({}));
 
           if (!res.ok) {
-            throw new Error(data.error || `HTTP ${res.status}`);
+            throw new Error(friendlyApiError(data.error, `HTTP ${res.status}`));
           }
 
           renderReportsList(data.reports || []);
         } catch (err) {
+          const message = friendlyApiError(err && err.message, "request failed");
           list.innerHTML = `
         <div class="reports-empty">
-          <p>Could not load reports (${escapeHtml(err.message)}).</p>
+          <p>Could not load reports. ${escapeHtml(message)}.</p>
           <p>Refresh the page to try again.</p>
         </div>`;
         }
@@ -3557,7 +3613,7 @@
           const data = await res.json().catch(() => ({}));
 
           if (!res.ok) {
-            throw new Error(data.error || `HTTP ${res.status}`);
+            throw new Error(friendlyApiError(data.error, `HTTP ${res.status}`));
           }
 
           appendLog("pass", "  ok  Workflow started");

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getReportFile } from "../lib/github";
+import { getReportFile, githubFailureStatus, readGithubToken } from "../lib/github";
 
 function contentTypeForPath(filePath: string): string {
   const lower = filePath.toLowerCase();
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const token = process.env.GITHUB_TOKEN;
+  const token = readGithubToken();
   if (!token) {
     return res.status(500).json({ error: "GITHUB_TOKEN not configured on the server" });
   }
@@ -66,6 +66,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).send(file.data);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return res.status(500).json({ error: message });
+    return res.status(githubFailureStatus(error)).json({ error: message });
   }
 }

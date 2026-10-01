@@ -9,17 +9,75 @@ export const WORKFLOW_FILE = "playwright.yml";
 const REPORT_ARTIFACT = "playwright-report";
 const API = "https://api.github.com";
 
-function authHeaders(token: string) {
+export class GitHubApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "GitHubApiError";
+    this.status = status;
+  }
+}
+
+export function readGithubToken(): string | undefined {
+  const raw = process.env.GITHUB_TOKEN;
+  if (!raw) return undefined;
+  const token = raw.trim().replace(/^["']|["']$/g, "");
+  return token || undefined;
+}
+
+export function githubAuthHeaders(token: string): Record<string, string> {
   return {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "qa-portfolio",
   };
 }
 
+function parseGithubMessage(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { message?: string };
+    return parsed.message || body;
+  } catch {
+    return body;
+  }
+}
+
+export function githubErrorMessage(status: number, body: string): string {
+  const message = parseGithubMessage(body);
+  if (status === 401 || /bad credentials/i.test(message)) {
+    return "GitHub token is invalid or expired";
+  }
+  if (status === 403 && /rate limit/i.test(message)) {
+    return "GitHub API rate limit exceeded";
+  }
+  if (status === 403) {
+    return "GitHub token cannot access Actions on this repository";
+  }
+  if (status === 404) {
+    return "GitHub repository or workflow was not found";
+  }
+  const compact = message.replace(/\s+/g, " ").trim();
+  return compact.slice(0, 180) || `GitHub request failed (${status})`;
+}
+
+export function githubFailureStatus(error: unknown): number {
+  if (error instanceof GitHubApiError) {
+    if (error.status === 401 || error.status === 403 || error.status === 404) {
+      return error.status;
+    }
+    return 502;
+  }
+  return 500;
+}
+
 async function ghGet<T>(token: string, path: string): Promise<T> {
-  const response = await fetch(`${API}${path}`, { headers: authHeaders(token) });
-  if (!response.ok) throw new Error((await response.text()) || `GitHub ${response.status}`);
+  const response = await fetch(`${API}${path}`, { headers: githubAuthHeaders(token) });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new GitHubApiError(response.status, githubErrorMessage(response.status, body));
+  }
   return response.json() as Promise<T>;
 }
 
@@ -117,8 +175,11 @@ async function downloadReportZip(token: string, runId: string): Promise<AdmZip |
   const artifact = (data.artifacts ?? []).find((item) => item.name === REPORT_ARTIFACT);
   if (!artifact) return null;
 
-  const response = await fetch(artifact.archive_download_url, { headers: authHeaders(token) });
-  if (!response.ok) throw new Error(`Artifact download failed (${response.status})`);
+  const response = await fetch(artifact.archive_download_url, { headers: githubAuthHeaders(token) });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new GitHubApiError(response.status, githubErrorMessage(response.status, body) || `Artifact download failed (${response.status})`);
+  }
 
   return new AdmZip(Buffer.from(await response.arrayBuffer()));
 }
@@ -173,7 +234,8 @@ export async function fetchRecentReports(token: string, limit = 10): Promise<Rep
 
   return Promise.all(
     runs.map(async (run) => {
-      const hasReport = run.status === "completed" ? await runHasReport(token, run.id) : false;
+      const completed = run.status === "completed";
+      const hasReport = completed ? await runHasReport(token, run.id) : false;
 
       return {
         run_id: run.id,
@@ -183,7 +245,7 @@ export async function fetchRecentReports(token: string, limit = 10): Promise<Rep
         conclusion: run.conclusion,
         html_url: run.html_url,
         has_report: hasReport,
-        report_url: hasReport ? `/api/report/${run.id}/index.html` : null,
+        report_url: completed ? `/api/report/${run.id}/index.html` : null,
       };
     })
   );
