@@ -19,3 +19,9 @@ node_modules/
 .env.local
 .env.*.local
 !.env.example
+.agents/
+.codex/
+.github/
+.impeccable/
+PRODUCT.md
+skills-lock.json
